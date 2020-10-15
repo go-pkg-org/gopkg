@@ -37,8 +37,8 @@ func (p Package) IsSource() bool {
 	return p.Main == ""
 }
 
-// WriteMetadata write the given metadata
-func WriteMetadata(m Metadata, path string) error {
+// writeMetadata write the given metadata
+func writeMetadata(m Metadata, path string) error {
 	b, err := yaml.Marshal(m)
 	if err != nil {
 		return err
@@ -48,7 +48,7 @@ func WriteMetadata(m Metadata, path string) error {
 }
 
 // ReadMetadata read metadata from file
-func ReadMetadata(path string) (Metadata, error) {
+func readMetadata(path string) (Metadata, error) {
 	var m Metadata
 
 	f, err := os.Open(fmt.Sprintf("%s/%s", path, metadataFile))

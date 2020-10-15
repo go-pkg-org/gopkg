@@ -23,12 +23,12 @@ func CreateCtrlDirectory(path, version, uploader string, metadata Metadata) erro
 	}
 
 	// Create the metadata file
-	if err := WriteMetadata(metadata, rootDir); err != nil {
+	if err := writeMetadata(metadata, rootDir); err != nil {
 		return err
 	}
 
 	// Create a default changelog
-	if err := WriteChangelog(NewChangelog(version, uploader), rootDir); err != nil {
+	if err := writeChangelog(newChangelog(version, uploader), rootDir); err != nil {
 		return err
 	}
 
@@ -38,12 +38,12 @@ func CreateCtrlDirectory(path, version, uploader string, metadata Metadata) erro
 func ReadCtrlDirectory(path string) (Metadata, Changelog, error) {
 	rootDir := filepath.Join(path, goPkgDir)
 
-	m, err := ReadMetadata(rootDir)
+	m, err := readMetadata(rootDir)
 	if err != nil {
 		return Metadata{}, Changelog{}, err
 	}
 
-	c, err := ReadChangelog(rootDir)
+	c, err := readChangelog(rootDir)
 	if err != nil {
 		return Metadata{}, Changelog{}, err
 	}

@@ -26,7 +26,7 @@ type Release struct {
 }
 
 // NewChangelog create a brand new changelog
-func NewChangelog(initialVersion, uploader string) Changelog {
+func newChangelog(initialVersion, uploader string) Changelog {
 	return Changelog{
 		Releases: []Release{{
 			Version:  fmt.Sprintf("%s-1", initialVersion),
@@ -37,7 +37,7 @@ func NewChangelog(initialVersion, uploader string) Changelog {
 }
 
 // WriteChangelog write the given changelog
-func WriteChangelog(c Changelog, path string) error {
+func writeChangelog(c Changelog, path string) error {
 	b, err := yaml.Marshal(c)
 	if err != nil {
 		return err
@@ -47,7 +47,7 @@ func WriteChangelog(c Changelog, path string) error {
 }
 
 // ReadChangelog read changelog from file
-func ReadChangelog(path string) (Changelog, error) {
+func readChangelog(path string) (Changelog, error) {
 	var c Changelog
 
 	f, err := os.Open(fmt.Sprintf("%s/%s", path, changelogFile))
