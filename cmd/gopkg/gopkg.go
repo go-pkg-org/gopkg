@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/go-pkg-org/gopkg/internal/build"
 	make2 "github.com/go-pkg-org/gopkg/internal/make"
 	"os"
 )
@@ -17,6 +18,8 @@ func main() {
 	switch action {
 	case "make":
 		err = make2.Make(os.Args[2])
+	case "build":
+		err = build.Build(os.Args[2])
 	default:
 		err = fmt.Errorf("unknow action")
 	}

@@ -50,22 +50,16 @@ func Make(directory string) error {
 		Maintainers: []string{"Aloïs Micard <alois@micard.lu>"},
 		Packages: []control.Package{
 			// Create initial source package
-			{Package: pkgName + "-dev"},
+			{Package: pkgName + "-dev", Description: "Package development files"},
 		},
 	}
 
-	// Search for executables
-	executables, err := getExecutables(directory)
+	// Search for binary packages
+	binPkgs, err := getBinaryPackages(directory)
 	if err != nil {
 		return err
 	}
-	// and create package for them
-	for _, executable := range executables {
-		m.Packages = append(m.Packages, control.Package{
-			Package:       executable,
-			Architectures: []string{"all"},
-		})
-	}
+	m.Packages = append(m.Packages, binPkgs...)
 
 	// Create the control directory
 	if err := control.CreateCtrlDirectory(directory, version, "Aloïs Micard <alois@micard.lu>", m); err != nil {
@@ -207,8 +201,8 @@ func getPackageName(importPath string) string {
 }
 
 // getExecutables will lookup for executable in given directory and returns their name
-func getExecutables(directory string) ([]string, error) {
-	var executables []string
+func getBinaryPackages(directory string) ([]control.Package, error) {
+	var pkgs []control.Package
 
 	if err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -224,13 +218,19 @@ func getExecutables(directory string) ([]string, error) {
 			return err
 		}
 
+		// todo better lookup
 		if strings.Contains(string(b), "func main()") {
-			executables = append(executables, strings.Replace(info.Name(), ".go", "", 1))
+			pkgs = append(pkgs, control.Package{
+				Package:       strings.Replace(info.Name(), ".go", "", 1),
+				Description:   "TODO",
+				Main:          strings.TrimPrefix(path, directory+"/"),
+				Architectures: []string{"amd64"},
+			})
 		}
 		return nil
 	}); err != nil {
 		return nil, err
 	}
 
-	return executables, nil
+	return pkgs, nil
 }

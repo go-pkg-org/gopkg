@@ -34,3 +34,19 @@ func CreateCtrlDirectory(path, version, uploader string, metadata Metadata) erro
 
 	return nil
 }
+
+func ReadCtrlDirectory(path string) (Metadata, Changelog, error) {
+	rootDir := filepath.Join(path, goPkgDir)
+
+	m, err := ReadMetadata(rootDir)
+	if err != nil {
+		return Metadata{}, Changelog{}, err
+	}
+
+	c, err := ReadChangelog(rootDir)
+	if err != nil {
+		return Metadata{}, Changelog{}, err
+	}
+
+	return m, c, nil
+}

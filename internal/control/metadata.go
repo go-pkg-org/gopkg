@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"os"
 )
 
 const metadataFile = "metadata.yaml"
@@ -23,8 +24,17 @@ type Metadata struct {
 type Package struct {
 	// The package name
 	Package string
+	// Main is the full path to the file containing the `func main()` sequence
+	Main string `yaml:"main,omitempty"`
+	// Human description of the package
+	Description string
 	// List of architectures for which the package should be built
 	Architectures []string
+}
+
+// IsSource returns true if the package is a source package
+func (p Package) IsSource() bool {
+	return p.Main == ""
 }
 
 // WriteMetadata write the given metadata
@@ -35,4 +45,21 @@ func WriteMetadata(m Metadata, path string) error {
 	}
 
 	return ioutil.WriteFile(fmt.Sprintf("%s/%s", path, metadataFile), b, 0640)
+}
+
+// ReadMetadata read metadata from file
+func ReadMetadata(path string) (Metadata, error) {
+	var m Metadata
+
+	f, err := os.Open(fmt.Sprintf("%s/%s", path, metadataFile))
+	if err != nil {
+		return Metadata{}, err
+	}
+	defer f.Close()
+
+	if err := yaml.NewDecoder(f).Decode(&m); err != nil {
+		return Metadata{}, err
+	}
+
+	return m, nil
 }
