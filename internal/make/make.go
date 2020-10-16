@@ -47,7 +47,7 @@ func Make(directory string) error {
 
 	m := control.Metadata{
 		Package:     pkgName,
-		Maintainers: []string{"Aloïs Micard <alois@micard.lu>"},
+		Maintainers: []string{getMaintainerEntry()},
 		Packages: []control.Package{
 			// Create initial source package
 			{Package: pkgName + "-dev", Description: "Package development files"},
@@ -233,4 +233,18 @@ func getBinaryPackages(directory string) ([]control.Package, error) {
 	}
 
 	return pkgs, nil
+}
+
+// getMaintainerEntry returns the maintainer entry: format Name <Email>
+func getMaintainerEntry() string {
+	return fmt.Sprintf("%s <%s>", getEnvOr("GOPKG_MAINTAINER_NAME", "TODO"),
+		getEnvOr("GOPKG_MAINTAINER_EMAIL", "TODO"))
+}
+
+func getEnvOr(key, fallback string) string {
+	val := os.Getenv(key)
+	if val == "" {
+		return fallback
+	}
+	return val
 }
