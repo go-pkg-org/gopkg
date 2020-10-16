@@ -200,7 +200,7 @@ func getPackageName(importPath string) string {
 	return strings.Replace(strings.ReplaceAll(importPath, "/", "-"), "github.com", "github", 1)
 }
 
-// getExecutables will lookup for executable in given directory and returns their name
+// getExecutables will lookup for executable in given directory and returns their corresponding package
 func getBinaryPackages(directory string) ([]control.Package, error) {
 	var pkgs []control.Package
 

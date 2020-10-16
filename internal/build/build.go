@@ -49,7 +49,7 @@ func Build(directory string) error {
 }
 
 func buildSourcePackage(directory, releaseVersion string, pkg control.Package) error {
-	pkgName := fmt.Sprintf("%s_%s_amd64.pkg", pkg.Package, releaseVersion)
+	pkgName := fmt.Sprintf("%s_%s.pkg", pkg.Package, releaseVersion)
 	cmd := exec.Command("tar", "-czvf", "build/"+pkgName, ".")
 	cmd.Dir = directory
 	cmd.Stdout = ioutil.Discard
