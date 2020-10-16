@@ -219,7 +219,7 @@ func getBinaryPackages(directory string) ([]control.Package, error) {
 		}
 
 		// todo better lookup
-		if strings.Contains(string(b), "func main()") {
+		if strings.Contains(string(b), "func main()") && strings.HasSuffix(path, ".go") {
 			pkgs = append(pkgs, control.Package{
 				Package:       strings.Replace(info.Name(), ".go", "", 1),
 				Description:   "TODO",
