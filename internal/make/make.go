@@ -10,27 +10,15 @@ import (
 	"strings"
 )
 
-func Make(directory string) error {
-	// Acquire temp go path for the session
-	goPath, err := getTempGoPath()
-	if err != nil {
-		return err
-	}
-
-	// Get import path
-	importPath, err := getImportPath(directory)
-	if err != nil {
-		return err
-	}
-
-	// Get version
-	version, err := getVersion(directory)
+func Make(importPath string) error {
+	// Fetch & extract latest upstream tarball
+	dir, version, err := getUpstreamTarball(importPath)
 	if err != nil {
 		return err
 	}
 
 	// Then get its dependencies
-	deps, err := getRealDeps(goPath, directory)
+	deps, err := getMissingDeps(dir)
 	if err != nil {
 		return err
 	}
@@ -55,14 +43,14 @@ func Make(directory string) error {
 	}
 
 	// Search for binary packages
-	binPkgs, err := getBinaryPackages(directory)
+	binPkgs, err := getBinaryPackages(dir)
 	if err != nil {
 		return err
 	}
 	m.Packages = append(m.Packages, binPkgs...)
 
 	// Create the control directory
-	if err := control.CreateCtrlDirectory(directory, version, "Aloïs Micard <alois@micard.lu>", m); err != nil {
+	if err := control.CreateCtrlDirectory(dir, version, "Aloïs Micard <alois@micard.lu>", m); err != nil {
 		return err
 	}
 
@@ -77,12 +65,13 @@ func Make(directory string) error {
 	return nil
 }
 
-// Get the package 'real' dependencies
+// Get the package missing dependencies dependencies
 // - remove the 'std' dependencies (builtin)
 // - remove the dependencies that belongs to the project we want to package
-func getRealDeps(goPath, importPath string) ([]string, error) {
+// todo remove already packaged deps
+func getMissingDeps(importPath string) ([]string, error) {
 	// Then get its dependencies
-	deps, err := getDeps(goPath, importPath)
+	deps, err := getDeps(importPath)
 	if err != nil {
 		return nil, err
 	}
@@ -121,10 +110,9 @@ func getRealDeps(goPath, importPath string) ([]string, error) {
 }
 
 // Get the package define dependencies
-func getDeps(goPath, path string) ([]string, error) {
+func getDeps(path string) ([]string, error) {
 	cmd := exec.Command("go", "list", "-f", "'{{ join .Imports \"\\n\" }}'", "./...")
 	cmd.Dir = path
-	cmd.Env = getEnvVariables(goPath)
 	cmd.Stderr = os.Stderr
 
 	b, err := cmd.Output()
@@ -156,33 +144,6 @@ func parseLines(b []byte) []string {
 	output = strings.TrimSuffix(output, "\n")
 
 	return strings.Split(output, "\n")
-}
-
-// Get env variables to use when creating go subprocess
-func getEnvVariables(goPath string) []string {
-	return []string{
-		fmt.Sprintf("HOME=%s", os.Getenv("HOME")),
-		fmt.Sprintf("GOPATH=%s", goPath),
-		"GO111MODULE=off",
-		"PATH=/usr/local/bin:/usr/bin:/bin",
-	}
-}
-
-func getImportPath(directory string) (string, error) {
-	cmd := exec.Command("go", "list")
-	cmd.Dir = directory
-	cmd.Stderr = os.Stderr
-
-	b, err := cmd.Output()
-	if err != nil {
-		return "", err
-	}
-
-	return strings.TrimSuffix(string(b), "\n"), nil
-}
-
-func getTempGoPath() (string, error) {
-	return "/tmp/gopkg-gopath", nil
 }
 
 // Retrieve the package version using the directory name
@@ -247,4 +208,63 @@ func getEnvOr(key, fallback string) string {
 		return fallback
 	}
 	return val
+}
+
+// getUpstreamTarball fetch latest available upstream tarball & extract it into current directory
+// this method return dir path, version, and error if any
+func getUpstreamTarball(importPath string) (string, string, error) {
+	// we only support Github based import path at the moment
+	if !strings.HasPrefix(importPath, "github.com/") {
+		return "", "", fmt.Errorf("unsuported import path %s", importPath)
+	}
+
+	// fetch latest git tag
+	version, err := getLatestGitTag(importPath)
+	if err != nil {
+		return "", "", err
+	}
+
+	// fetch upstream tarball
+	// TODO: in case upstream doesn't provide git tag, the following will certainly fails
+	// we should include support for packaging repo without any tag
+	tarFile := fmt.Sprintf("%s.tar.gz", version)
+	cmd := exec.Command("curl", "-L", fmt.Sprintf("https://%s/archive/%s.tar.gz", importPath, version), "-o", tarFile)
+	if err := cmd.Run(); err != nil {
+		return "", "", fmt.Errorf("error: %s (%s)", cmd.String(), err)
+	}
+
+	// extract upstream tarball
+	cmd = exec.Command("tar", "-xvf", tarFile)
+	if err := cmd.Run(); err != nil {
+		return "", "", fmt.Errorf("error: %s (%s)", cmd.String(), err)
+	}
+
+	// directory name is always <upstream-name>-version
+	cleanVersion := strings.TrimPrefix(version, "v")
+	parts := strings.Split(importPath, "/")
+	return fmt.Sprintf("%s-%s", parts[len(parts)-1], cleanVersion), cleanVersion, nil
+}
+
+// getLatestGitTag will clone corresponding git repository, get version
+// and remove it after all
+func getLatestGitTag(importPath string) (string, error) {
+	remote := fmt.Sprintf("https://%s.git", importPath)
+
+	// Clone repository
+	cmd := exec.Command("git", "clone", remote, "result")
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("error: git clone %s result (%s)", remote, err)
+	}
+	defer os.RemoveAll("result")
+
+	// Extract latest tag / version
+	// TODO: in case upstream doesn't provide git tag, the following will certainly fails
+	cmd = exec.Command("git", "describe", "--tags", "--abbrev=0")
+	cmd.Dir = "result"
+	b, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("error: git describe (%s)", err)
+	}
+
+	return strings.TrimSuffix(string(b), "\n"), nil
 }
