@@ -5,7 +5,34 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"strings"
 )
+
+func CreateFileMap (path string) (map[string]string, error) {
+	dirContent, err := ioutil.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create file list.
+	var fileList = map[string]string {}
+	for _, file := range dirContent {
+		if file.IsDir()  {
+			tmp, err := CreateFileMap(file.Name())
+			if err != nil {
+				return nil, err
+			}
+			for t, p := range tmp {
+				fileList[t] = p
+			}
+		} else {
+			fileList[strings.TrimPrefix(file.Name(), path)] = file.Name()
+		}
+	}
+
+	return fileList, nil
+}
+
 
 // Create a tar file from a set of files.
 // The expected input `files` should be 'filename  => filePath' where the filename
