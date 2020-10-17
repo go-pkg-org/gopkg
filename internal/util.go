@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 	"strings"
 )
 
@@ -17,16 +18,20 @@ func CreateFileMap (path string) (map[string]string, error) {
 	// Create file list.
 	var fileList = map[string]string {}
 	for _, file := range dirContent {
+		if strings.Index(file.Name(), ".") == 0 {
+			continue
+		}
+
 		if file.IsDir()  {
-			tmp, err := CreateFileMap(file.Name())
+			tmp, err := CreateFileMap(filepath.Join(path, file.Name()))
 			if err != nil {
 				return nil, err
 			}
 			for t, p := range tmp {
-				fileList[t] = p
+				fileList[filepath.Join(file.Name(), t)] = p
 			}
 		} else {
-			fileList[strings.TrimPrefix(file.Name(), path)] = file.Name()
+			fileList[file.Name()] = filepath.Join(path, file.Name())
 		}
 	}
 
