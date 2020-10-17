@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 )
 
+// ExecBuild execute the `gopkg build` command
 func ExecBuild(c *cli.Context) error {
 	if !c.Args().Present() {
 		return fmt.Errorf("missing control-directory")

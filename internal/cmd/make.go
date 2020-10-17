@@ -6,6 +6,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+// ExecMake execute the `gopkg make` command
 func ExecMake(c *cli.Context) error {
 	if !c.Args().Present() {
 		return fmt.Errorf("missing import-path")
