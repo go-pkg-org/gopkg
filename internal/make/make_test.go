@@ -75,7 +75,7 @@ func TestGetGitVersion(t *testing.T) {
 func runGitCmd(dir string, env []string, args ...string) error {
 	cmd := exec.Command("git", args...)
 	cmd.Dir = dir
-	cmd.Env = env
+	cmd.Env = append(env, "PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin")
 
 	b, err := cmd.Output()
 	if err != nil {
