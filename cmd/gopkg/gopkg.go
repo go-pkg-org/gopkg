@@ -32,7 +32,7 @@ func main() {
 	action := os.Args[1]
 	switch action {
 	case "make":
-		err = make2.Make(realPath)
+		err = make2.Make(os.Args[2])
 	case "build":
 		err = build.Build(realPath)
 	default:
