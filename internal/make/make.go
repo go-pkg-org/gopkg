@@ -29,7 +29,7 @@ func Make(importPath string) error {
 	cleanVersion := strings.TrimPrefix(version, "v")
 
 	// Then get its dependencies
-	deps, err := getMissingDeps(pkgName)
+	deps, err := getMissingDeps(pkgName, importPath)
 	if err != nil {
 		return err
 	}
@@ -75,9 +75,9 @@ func Make(importPath string) error {
 // - remove the 'std' dependencies (builtin)
 // - remove the dependencies that belongs to the project we want to package
 // todo remove already packaged deps
-func getMissingDeps(importPath string) ([]string, error) {
+func getMissingDeps(path, importPath string) ([]string, error) {
 	// Then get its dependencies
-	deps, err := getDeps(importPath)
+	deps, err := getDeps(path)
 	if err != nil {
 		return nil, err
 	}
