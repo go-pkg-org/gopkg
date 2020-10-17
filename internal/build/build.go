@@ -41,8 +41,8 @@ func Build(directory string) error {
 				return err
 			}
 		} else {
-			for _, targetOs := range pkg.OS {
-				for _, targetArch := range pkg.Architectures {
+			for targetOs, targetArches := range pkg.Targets {
+				for _, targetArch := range targetArches {
 					if err = buildBinaryPackage(directory, releaseVersion, targetOs, targetArch, pkg); err != nil {
 						return err
 					}

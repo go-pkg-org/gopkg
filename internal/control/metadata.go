@@ -28,10 +28,8 @@ type Package struct {
 	Main string `yaml:"main,omitempty"`
 	// Human description of the package
 	Description string
-	// List of architectures for which the package should be built
-	Architectures []string `yaml:"architectures,omitempty"`
-	// List of the OSes for which the package should be built
-	OS []string `yaml:"os,omitempty"`
+	// Targets describe the build target (os,arches)
+	Targets map[string][]string `yaml:"targets,omitempty"`
 }
 
 // IsSource returns true if the package is a source package

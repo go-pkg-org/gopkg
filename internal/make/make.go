@@ -181,11 +181,10 @@ func getBinaryPackages(directory string) ([]control.Package, error) {
 		if strings.Contains(string(b), "func main()") && strings.HasSuffix(path, ".go") {
 			pkgName := strings.Replace(info.Name(), ".go", "", 1)
 			pkgs = append(pkgs, control.Package{
-				Package:       pkgName,
-				Description:   "TODO",
-				Main:          strings.TrimPrefix(path, directory+"/"),
-				Architectures: getSupportedArch(),
-				OS:            getSupportedOS(),
+				Package:     pkgName,
+				Description: "TODO",
+				Main:        strings.TrimPrefix(path, directory+"/"),
+				Targets:     getSupportedTargets(),
 			})
 			log.Trace().Str("file", path).Str("package", pkgName).Msg("Found binary package")
 		}
@@ -274,10 +273,6 @@ func getGitVersion(gitDir string) (string, bool, error) {
 	return strings.TrimSuffix(string(b), "\n"), true, nil
 }
 
-func getSupportedOS() []string {
-	return []string{"linux"} // TODO add more
-}
-
-func getSupportedArch() []string {
-	return []string{"amd64"} // TODO add more
+func getSupportedTargets() map[string][]string {
+	return map[string][]string{"linux": {"amd64"}} // TODO add more
 }
