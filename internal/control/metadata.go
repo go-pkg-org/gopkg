@@ -5,6 +5,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 )
 
 const metadataFile = "metadata.yaml"
@@ -51,7 +52,7 @@ func writeMetadata(m Metadata, path string) error {
 func readMetadata(path string) (Metadata, error) {
 	var m Metadata
 
-	f, err := os.Open(fmt.Sprintf("%s/%s", path, metadataFile))
+	f, err := os.Open(filepath.Join(path, metadataFile))
 	if err != nil {
 		return Metadata{}, err
 	}
