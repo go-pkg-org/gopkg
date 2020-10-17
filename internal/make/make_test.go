@@ -79,8 +79,7 @@ func runGitCmd(dir string, env []string, args ...string) error {
 
 	b, err := cmd.Output()
 	if err != nil {
-		fmt.Printf(strings.TrimSuffix(string(b), "\n"))
-		return err
+		return fmt.Errorf("error while running `%s` (%s)", cmd.String(), strings.TrimSuffix(string(b), "\n"))
 	}
 
 	return nil
