@@ -1,6 +1,7 @@
 package make
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -22,7 +23,7 @@ func TestGetGitVersion(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	if err := runGitCmd(tmpDir, "init"); err != nil {
+	if err := runGitCmd(tmpDir, nil, "init"); err != nil {
 		t.Error(err)
 	}
 
@@ -30,11 +31,12 @@ func TestGetGitVersion(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err := runGitCmd(tmpDir, "add", "README.md"); err != nil {
+	if err := runGitCmd(tmpDir, nil, "add", "README.md"); err != nil {
 		t.Error(err)
 	}
 
-	if err := runGitCmd(tmpDir, "commit", "-m", "hello"); err != nil {
+	if err := runGitCmd(tmpDir, []string{"GIT_COMMITTER_DATE=\"Thu Oct 15 20:05:34 2020 +0200\""},
+		"commit", "-m", "hello"); err != nil {
 		t.Error(err)
 	}
 
@@ -47,12 +49,12 @@ func TestGetGitVersion(t *testing.T) {
 		t.Error("Git version should not be a tag")
 	}
 
-	if !strings.HasPrefix(v, "0.0~git") {
-		t.Error("Wrong git version")
+	if v != "0.0~git20201015205" {
+		t.Errorf("Wrong git version (%s)", v)
 	}
 
 	// Create a git tag
-	if err := runGitCmd(tmpDir, "tag", "v1.0.0"); err != nil {
+	if err := runGitCmd(tmpDir, nil, "tag", "v1.0.0"); err != nil {
 		t.Error(err)
 	}
 
@@ -70,8 +72,21 @@ func TestGetGitVersion(t *testing.T) {
 	}
 }
 
-func runGitCmd(dir string, args ...string) error {
+func runGitCmd(dir string, env []string, args ...string) error {
 	cmd := exec.Command("git", args...)
 	cmd.Dir = dir
-	return cmd.Run()
+
+	if len(env) > 0 {
+		cmd.Env = os.Environ()
+		for _, val := range env {
+			cmd.Env = append(cmd.Env, val)
+		}
+	}
+
+	b, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("error while running `%s` (%s)", cmd.String(), strings.TrimSuffix(string(b), "\n"))
+	}
+
+	return nil
 }
