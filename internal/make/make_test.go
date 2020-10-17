@@ -1,10 +1,12 @@
 package make
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -74,5 +76,12 @@ func runGitCmd(dir string, env []string, args ...string) error {
 	cmd := exec.Command("git", args...)
 	cmd.Dir = dir
 	cmd.Env = env
-	return cmd.Run()
+
+	b, err := cmd.Output()
+	if err != nil {
+		fmt.Printf(strings.TrimSuffix(string(b), "\n"))
+		return err
+	}
+
+	return nil
 }
