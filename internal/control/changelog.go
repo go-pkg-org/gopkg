@@ -5,6 +5,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 )
 
 const changelogFile = "changelog.yaml"
@@ -43,14 +44,14 @@ func writeChangelog(c Changelog, path string) error {
 		return err
 	}
 
-	return ioutil.WriteFile(fmt.Sprintf("%s/%s", path, changelogFile), b, 0640)
+	return ioutil.WriteFile(filepath.Join(path, changelogFile), b, 0640)
 }
 
 // ReadChangelog read changelog from file
 func readChangelog(path string) (Changelog, error) {
 	var c Changelog
 
-	f, err := os.Open(fmt.Sprintf("%s/%s", path, changelogFile))
+	f, err := os.Open(filepath.Join(path, changelogFile))
 	if err != nil {
 		return Changelog{}, err
 	}
