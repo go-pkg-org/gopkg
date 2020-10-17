@@ -19,14 +19,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	realPath := os.Args[2]
-	if !filepath.IsAbs(realPath) {
-		wd, err := os.Getwd()
-		if err != nil {
-			log.Panic().Msg("failed to get working directory")
-		}
-		realPath = filepath.Join(wd, realPath)
-	}
+
 
 	var err error
 	action := os.Args[1]
@@ -34,6 +27,15 @@ func main() {
 	case "make":
 		err = make2.Make(os.Args[2])
 	case "build":
+		realPath := os.Args[2]
+		if !filepath.IsAbs(realPath) {
+			wd, err := os.Getwd()
+			if err != nil {
+				log.Panic().Msg("failed to get working directory")
+			}
+			realPath = filepath.Join(wd, realPath)
+		}
+
 		err = build.Build(realPath)
 	default:
 		err = fmt.Errorf("unknow action")
