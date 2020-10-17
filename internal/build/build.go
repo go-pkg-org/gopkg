@@ -2,9 +2,9 @@ package build
 
 import (
 	"fmt"
-	util "github.com/go-pkg-org/gopkg/internal"
 	"github.com/go-pkg-org/gopkg/internal/control"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -56,26 +56,26 @@ func Build(directory string) error {
 }
 
 func buildSourcePackage(directory, releaseVersion string, pkg control.Package) error {
-	pkgName := fmt.Sprintf("%s_%s.pkg", pkg.Package, releaseVersion)
+	pkgName := fmt.Sprintf("%s_%s-dev.pkg", pkg.Package, releaseVersion)
 
-	dir, err := util.CreateFileMap(directory, "src", []string {".go", ".md", ".mod", ".sum"})
+	dir, err := CreateFileMap(directory, "", []string{".go", ".md", ".mod", ".sum", "LICENSE"})
 	if err != nil {
 		return err
 	}
 
-	if err := util.CreateTar(filepath.Join("build", pkgName), dir, true); err != nil {
+	if err := CreateTar(filepath.Join("build", pkgName), dir, true); err != nil {
 		return err
 	}
 
+	fmt.Printf("Successfully build %s\n", pkgName)
 	return nil
 }
 
 func buildBinaryPackage(directory, releaseVersion, targetOs, targetArch string, pkg control.Package) error {
 	pkgName := fmt.Sprintf("%s_%s_%s_%s", pkg.Package, releaseVersion, targetOs, targetArch)
-	buildDir := fmt.Sprintf("build/%s", pkgName)
+	buildDir := filepath.Join("build", pkgName)
 
-	// TODO: /usr/share/bin is specific to linux/darwin arch. We should have specialized path depending on targetOs
-	cmd := exec.Command("go", "build", "-v", "-o", fmt.Sprintf("%s/usr/share/bin/%s", buildDir, pkg.Package), pkg.Main)
+	cmd := exec.Command("go", "build", "-v", "-o", filepath.Join(buildDir, pkg.Package), pkg.Main)
 	cmd.Dir = directory
 	cmd.Stdout = ioutil.Discard
 	cmd.Stderr = os.Stderr
@@ -84,15 +84,23 @@ func buildBinaryPackage(directory, releaseVersion, targetOs, targetArch string, 
 		return err
 	}
 
-	// finally create tar archive
-	cmd = exec.Command("tar", "-czvf", "build/"+pkgName+".pkg", "-C", buildDir, ".") // TODO: strip '.'
-	cmd.Dir = directory
-	cmd.Stdout = ioutil.Discard
-	if err := cmd.Run(); err != nil {
-		return err
+	// Save the package in `build/packageName.pkg`
+	err := CreateTar(filepath.Join("build", pkgName+".pkg"), []ArchiveEntry{
+		{
+			FilePath:    filepath.Join(buildDir, pkg.Package),
+			ArchivePath: filepath.Join("bin", pkg.Package),
+		},
+	}, true)
+
+	if err != nil {
+		log.Panicf("failed to build archive: %s", err)
+	}
+
+	// Remove the build file and keep package.
+	if err := os.RemoveAll(filepath.Join(buildDir)); err != nil {
+		log.Panicf("failed to remove build artifacts: %s", err)
 	}
 
 	fmt.Printf("Successfully build %s.pkg\n", pkgName)
-
 	return nil
 }
