@@ -12,6 +12,7 @@ import (
 	"time"
 )
 
+// Make create a brand new control package from given import path
 func Make(importPath string) error {
 	pkgName := getPackageName(importPath)
 	log.Debug().Str("package", pkgName).Msg("Package name detected")

@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 )
 
+// Build will build control package located as directory
+// and produce binary / dev packages into directory/build folder
 func Build(directory string) error {
 	m, c, err := control.ReadCtrlDirectory(directory)
 	if err != nil {

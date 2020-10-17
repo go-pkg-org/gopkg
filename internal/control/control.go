@@ -8,6 +8,8 @@ import (
 
 const goPkgDir = "gopkg"
 
+// CreateCtrlDirectory create a brand new control directory at given path
+// using given details
 func CreateCtrlDirectory(path, version, uploader string, metadata Metadata) error {
 	rootDir := filepath.Join(path, goPkgDir)
 
@@ -35,6 +37,8 @@ func CreateCtrlDirectory(path, version, uploader string, metadata Metadata) erro
 	return nil
 }
 
+// ReadCtrlDirectory reads control directory at given path
+// and returns metadata & changelog
 func ReadCtrlDirectory(path string) (Metadata, Changelog, error) {
 	rootDir := filepath.Join(path, goPkgDir)
 

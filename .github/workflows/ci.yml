@@ -1,0 +1,49 @@
+name: Go
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        go-version: [ 1.14.x, 1.15.x ]
+        platform: [ ubuntu-latest, macos-latest, windows-latest ]
+    name: ${{ matrix.platform }} @ Go ${{ matrix.go-version }}
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Install Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v2.1.3
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Set environment
+        run: |
+          echo "::set-env name=GOPATH::$(dirname $GITHUB_WORKSPACE)"
+          echo "::add-path::$(dirname $GITHUB_WORKSPACE)/bin"
+          git config --global user.name "Github Action"
+          git config --global user.email "noreply@github.com"
+        shell: bash
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install Dependencies
+        run: |
+          go get -v golang.org/x/lint/golint
+
+      - name: Lint source code
+        run: golint -set_exit_status ./...
+
+      - name: Test
+        run: go test ./...
+
+      - name: Update go report card
+        if: success() && matrix.platform == 'ubuntu-latest'
+        continue-on-error: true
+        uses: creekorful/goreportcard-action@v1.0
