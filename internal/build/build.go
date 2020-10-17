@@ -37,13 +37,17 @@ func Build(directory string) error {
 
 		var err error
 		if pkg.IsSource() {
-			err = buildSourcePackage(directory, releaseVersion, pkg)
+			if err = buildSourcePackage(directory, releaseVersion, pkg); err != nil {
+				return err
+			}
 		} else {
-			err = buildBinaryPackage(directory, releaseVersion, pkg)
-		}
-
-		if err != nil {
-			return err
+			for _, targetOs := range pkg.OS {
+				for _, targetArch := range pkg.Architectures {
+					if err = buildBinaryPackage(directory, releaseVersion, targetOs, targetArch, pkg); err != nil {
+						return err
+					}
+				}
+			}
 		}
 	}
 
@@ -62,15 +66,16 @@ func buildSourcePackage(directory, releaseVersion string, pkg control.Package) e
 	return nil
 }
 
-func buildBinaryPackage(directory, releaseVersion string, pkg control.Package) error {
-	// TODO support multi arch / os
-	pkgName := fmt.Sprintf("%s_%s_darwin_amd64", pkg.Package, releaseVersion)
+func buildBinaryPackage(directory, releaseVersion, targetOs, targetArch string, pkg control.Package) error {
+	pkgName := fmt.Sprintf("%s_%s_%s_%s", pkg.Package, releaseVersion, targetOs, targetArch)
 	buildDir := fmt.Sprintf("build/%s", pkgName)
 
+	// TODO: /usr/share/bin is specific to linux/darwin arch. We should have specialized path depending on targetOs
 	cmd := exec.Command("go", "build", "-v", "-o", fmt.Sprintf("%s/usr/share/bin/%s", buildDir, pkg.Package), pkg.Main)
 	cmd.Dir = directory
 	cmd.Stdout = ioutil.Discard
 	cmd.Stderr = os.Stderr
+	cmd.Env = append(os.Environ(), fmt.Sprintf("GOOS=%s", targetOs), fmt.Sprintf("GOARCH=%s", targetArch))
 	if err := cmd.Run(); err != nil {
 		return err
 	}

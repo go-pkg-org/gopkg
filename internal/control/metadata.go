@@ -29,10 +29,8 @@ type Package struct {
 	// Human description of the package
 	Description string
 	// List of architectures for which the package should be built
-	// all means: all supported architectures
 	Architectures []string `yaml:"architectures,omitempty"`
 	// List of the OSes for which the package should be built
-	// all means: all supported OS
 	OS []string `yaml:"os,omitempty"`
 }
 

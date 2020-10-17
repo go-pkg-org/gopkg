@@ -184,8 +184,8 @@ func getBinaryPackages(directory string) ([]control.Package, error) {
 				Package:       pkgName,
 				Description:   "TODO",
 				Main:          strings.TrimPrefix(path, directory+"/"),
-				Architectures: []string{"all"},
-				OS:            []string{"all"},
+				Architectures: getSupportedArch(),
+				OS:            getSupportedOS(),
 			})
 			log.Trace().Str("file", path).Str("package", pkgName).Msg("Found binary package")
 		}
@@ -272,4 +272,12 @@ func getGitVersion(gitDir string) (string, bool, error) {
 	}
 
 	return strings.TrimSuffix(string(b), "\n"), true, nil
+}
+
+func getSupportedOS() []string {
+	return []string{"linux"} // TODO add more
+}
+
+func getSupportedArch() []string {
+	return []string{"amd64"} // TODO add more
 }
