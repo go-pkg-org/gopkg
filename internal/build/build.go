@@ -1,9 +1,8 @@
 package build
 
 import (
-	"archive/tar"
-	"bytes"
 	"fmt"
+	util "github.com/go-pkg-org/gopkg/internal"
 	"github.com/go-pkg-org/gopkg/internal/control"
 	"io/ioutil"
 	"os"
@@ -59,14 +58,22 @@ func Build(directory string) error {
 func buildSourcePackage(directory, releaseVersion string, pkg control.Package) error {
 	pkgName := fmt.Sprintf("%s_%s.pkg", pkg.Package, releaseVersion)
 
-
-
-	cmd := exec.Command("tar", "-czvf", "build/"+pkgName, ".")
+/*	cmd := exec.Command("tar", "-czvf", "build/"+pkgName, ".")
 	cmd.Dir = directory
-	cmd.Stdout = ioutil.Discard
-	if err := cmd.Run(); err != nil {
+	cmd.Stdout = ioutil.Discard*/
+
+	dir, err := util.CreateFileMap(directory)
+	if err != nil {
 		return err
 	}
+
+	if err := util.CreateTar(filepath.Join("build", pkgName), dir, true); err != nil {
+		return err
+	}
+
+	/*if err := cmd.Run(); err != nil {
+		return err
+	}*/
 
 	return nil
 }

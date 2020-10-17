@@ -42,7 +42,7 @@ func CreateFileMap (path string) (map[string]string, error) {
 func CreateTar(path string, files map[string]string, overwrite bool) error {
 	if !overwrite {
 		if _, err := ioutil.ReadFile(path); err != nil {
-			return fmt.Errorf("failed to create new tar source. File already exist")
+			return fmt.Errorf("failed to create new tar source (file already exist)")
 		}
 	}
 
