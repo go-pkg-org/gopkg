@@ -7,9 +7,3 @@ func TestGetPackageName(t *testing.T) {
 		t.FailNow()
 	}
 }
-
-func TestGetVersion(t *testing.T) {
-	if v, err := getVersion("vim-2.3.1"); err != nil || v != "2.3.1" {
-		t.FailNow()
-	}
-}

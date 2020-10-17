@@ -4,12 +4,17 @@ import (
 	"fmt"
 	"github.com/go-pkg-org/gopkg/internal/build"
 	make2 "github.com/go-pkg-org/gopkg/internal/make"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"os"
 )
 
 func main() {
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout}).
+		Level(zerolog.DebugLevel)
+
 	if len(os.Args) == 1 {
-		_, _ = fmt.Fprintf(os.Stderr, "correct usage: gopkg <action> args...")
+		log.Error().Msg("correct usage: gopkg <action> args...")
 		os.Exit(1)
 	}
 
@@ -25,7 +30,7 @@ func main() {
 	}
 
 	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err)
+		log.Err(err).Msg("error while running gopkg")
 		os.Exit(1)
 	}
 }

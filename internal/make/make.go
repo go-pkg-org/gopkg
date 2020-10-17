@@ -3,33 +3,39 @@ package make
 import (
 	"fmt"
 	"github.com/go-pkg-org/gopkg/internal/control"
+	"github.com/rs/zerolog/log"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 func Make(importPath string) error {
-	// Fetch & extract latest upstream tarball
-	dir, version, err := getUpstreamTarball(importPath)
+	pkgName := getPackageName(importPath)
+	log.Debug().Str("package", pkgName).Msg("Package name detected")
+
+	if _, err := os.Stat(pkgName); err == nil {
+		return fmt.Errorf("already existing package directory: %s", pkgName)
+	}
+
+	// Fetch & extract upstream source code
+	version, err := getUpstreamSource(importPath, pkgName)
 	if err != nil {
 		return err
 	}
+	// Remove any leading v since we doesn't want it in gopkg archive
+	cleanVersion := strings.TrimPrefix(version, "v")
 
 	// Then get its dependencies
-	deps, err := getMissingDeps(dir)
+	deps, err := getMissingDeps(pkgName)
 	if err != nil {
 		return err
 	}
 
-	pkgName := getPackageName(importPath)
-
 	if len(deps) > 0 {
-		fmt.Printf("Dependencies that need to be packaged first:\n")
-		for _, dep := range deps {
-			fmt.Printf("- %s\n", dep)
-		}
+		log.Warn().Strs("dependencies", deps).Msg("Dependencies that need to be packaged first")
 		return nil // TODO error instead?
 	}
 
@@ -38,28 +44,28 @@ func Make(importPath string) error {
 		Maintainers: []string{getMaintainerEntry()},
 		Packages: []control.Package{
 			// Create initial source package
-			{Package: pkgName + "-dev", Description: "Package development files"},
+			{Package: pkgName + "-dev", Description: "TODO"},
 		},
 	}
 
 	// Search for binary packages
-	binPkgs, err := getBinaryPackages(dir)
+	binPkgs, err := getBinaryPackages(pkgName)
 	if err != nil {
 		return err
 	}
 	m.Packages = append(m.Packages, binPkgs...)
 
 	// Create the control directory
-	if err := control.CreateCtrlDirectory(dir, version, "Aloïs Micard <alois@micard.lu>", m); err != nil {
+	if err := control.CreateCtrlDirectory(pkgName, cleanVersion, getMaintainerEntry(), m); err != nil {
 		return err
 	}
 
-	fmt.Printf("Import-Path: %s\n", importPath)
-	fmt.Printf("Version: %s\n", version)
-	fmt.Printf("Control package: %s\n", pkgName)
-	fmt.Printf("Built packages:\n")
+	log.Info().Str("import-path", importPath).Msg("Detected Import-Path")
+	log.Info().Str("version", cleanVersion).Msg("Detected Version")
+	log.Info().Str("package", pkgName).Msg("Detected control package")
+	log.Info().Msg("Built packages:")
 	for _, pkg := range m.Packages {
-		fmt.Printf("-> %s\n", pkg.Package)
+		log.Info().Str("package", pkg.Package).Msg("")
 	}
 
 	return nil
@@ -146,15 +152,6 @@ func parseLines(b []byte) []string {
 	return strings.Split(output, "\n")
 }
 
-// Retrieve the package version using the directory name
-func getVersion(directory string) (string, error) {
-	if strings.Count(directory, "-") != 1 {
-		return "", fmt.Errorf("malformed directory name %s. expected <name>-<version>", directory)
-	}
-
-	return strings.Split(directory, "-")[1], nil
-}
-
 // Translate from importPath to package name
 // i.e github.com/creekorful/mvnparser -> github-creekorful-mvnparser
 func getPackageName(importPath string) string {
@@ -181,12 +178,14 @@ func getBinaryPackages(directory string) ([]control.Package, error) {
 
 		// todo better lookup
 		if strings.Contains(string(b), "func main()") && strings.HasSuffix(path, ".go") {
+			pkgName := strings.Replace(info.Name(), ".go", "", 1)
 			pkgs = append(pkgs, control.Package{
-				Package:       strings.Replace(info.Name(), ".go", "", 1),
+				Package:       pkgName,
 				Description:   "TODO",
 				Main:          strings.TrimPrefix(path, directory+"/"),
 				Architectures: []string{"amd64"},
 			})
+			log.Trace().Str("file", path).Str("package", pkgName).Msg("Found binary package")
 		}
 		return nil
 	}); err != nil {
@@ -210,61 +209,65 @@ func getEnvOr(key, fallback string) string {
 	return val
 }
 
-// getUpstreamTarball fetch latest available upstream tarball & extract it into current directory
-// this method return dir path, version, and error if any
-func getUpstreamTarball(importPath string) (string, string, error) {
-	// we only support Github based import path at the moment
-	if !strings.HasPrefix(importPath, "github.com/") {
-		return "", "", fmt.Errorf("unsuported import path %s", importPath)
-	}
-
-	// fetch latest git tag
-	version, err := getLatestGitTag(importPath)
-	if err != nil {
-		return "", "", err
-	}
-
-	// fetch upstream tarball
-	// TODO: in case upstream doesn't provide git tag, the following will certainly fails
-	// we should include support for packaging repo without any tag
-	tarFile := fmt.Sprintf("%s.tar.gz", version)
-	cmd := exec.Command("curl", "-L", fmt.Sprintf("https://%s/archive/%s.tar.gz", importPath, version), "-o", tarFile)
-	if err := cmd.Run(); err != nil {
-		return "", "", fmt.Errorf("error: %s (%s)", cmd.String(), err)
-	}
-
-	// extract upstream tarball
-	cmd = exec.Command("tar", "-xvf", tarFile)
-	if err := cmd.Run(); err != nil {
-		return "", "", fmt.Errorf("error: %s (%s)", cmd.String(), err)
-	}
-
-	// directory name is always <upstream-name>-version
-	cleanVersion := strings.TrimPrefix(version, "v")
-	parts := strings.Split(importPath, "/")
-	return fmt.Sprintf("%s-%s", parts[len(parts)-1], cleanVersion), cleanVersion, nil
-}
-
-// getLatestGitTag will clone corresponding git repository, get version
-// and remove it after all
-func getLatestGitTag(importPath string) (string, error) {
+// getUpstreamSource fetch latest available upstream source
+// this method return path to upstream source, version, and error if any
+func getUpstreamSource(importPath, where string) (string, error) {
 	remote := fmt.Sprintf("https://%s.git", importPath)
+	log.Debug().Str("remote", remote).Msg("Found upstream remote")
 
 	// Clone repository
-	cmd := exec.Command("git", "clone", remote, "result")
+	log.Debug().Str("remote", remote).Msg("Cloning remote")
+	cmd := exec.Command("git", "clone", remote, where)
 	if err := cmd.Run(); err != nil {
 		return "", fmt.Errorf("error: git clone %s result (%s)", remote, err)
 	}
-	defer os.RemoveAll("result")
 
-	// Extract latest tag / version
-	// TODO: in case upstream doesn't provide git tag, the following will certainly fails
-	cmd = exec.Command("git", "describe", "--tags", "--abbrev=0")
-	cmd.Dir = "result"
-	b, err := cmd.Output()
+	// Get git repository latest version
+	version, isTag, err := getGitVersion(where)
 	if err != nil {
-		return "", fmt.Errorf("error: git describe (%s)", err)
+		return "", err
+	}
+	log.Debug().Str("version", version).Bool("tagged", isTag).Msg("Found upstream version")
+
+	// if this is a tagged release, checkout it to align source code
+	if isTag {
+		log.Debug().Str("tag", version).Msg("Checking out tag")
+		cmd = exec.Command("git", "checkout", version)
+		cmd.Dir = where
+		if err := cmd.Run(); err != nil {
+			return "", err
+		}
 	}
 
-	return strings.TrimSuffix(string(b), "\n"), nil
+	return version, nil
+}
+
+// getGitVersion will attempt to auto-detect the latest stable/tagged release
+// if upstream tag release: it will return the latest tag
+// if upstream doesn't tag release: it will create a special version for the latest (HEAD) commit
+func getGitVersion(gitDir string) (string, bool, error) {
+	// Extract latest tag / version
+	cmd := exec.Command("git", "describe", "--tags", "--abbrev=0")
+	cmd.Dir = gitDir
+	b, err := cmd.Output()
+	if err != nil {
+		// There maybe no tag available, create a manual version using commit date
+		cmd = exec.Command("git", "--no-pager", "log", "-1", "--date=short", "--pretty=format:%cD")
+		cmd.Dir = gitDir
+
+		b, err = cmd.Output()
+		if err != nil {
+			// were doomed
+			return "", false, err
+		}
+
+		date, err := time.Parse(time.RFC1123Z, strings.TrimSuffix(string(b), "\n"))
+		if err != nil {
+			return "", false, err
+		}
+
+		return fmt.Sprintf("0.0~git%d%d%d%d%d", date.Year(), date.Month(), date.Day(), date.Hour(), date.Minute()), false, nil
+	}
+
+	return strings.TrimSuffix(string(b), "\n"), true, nil
 }
