@@ -184,7 +184,8 @@ func getBinaryPackages(directory string) ([]control.Package, error) {
 				Package:       pkgName,
 				Description:   "TODO",
 				Main:          strings.TrimPrefix(path, directory+"/"),
-				Architectures: []string{"amd64"},
+				Architectures: []string{"all"},
+				OS:            []string{"all"},
 			})
 			log.Trace().Str("file", path).Str("package", pkgName).Msg("Found binary package")
 		}
