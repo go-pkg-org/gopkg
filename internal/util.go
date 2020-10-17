@@ -4,34 +4,54 @@ import (
 	"archive/tar"
 	"bytes"
 	"fmt"
+	"github.com/rs/zerolog/log"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
 )
 
-func CreateFileMap (path string) (map[string]string, error) {
+func contains(haystack []string, needle string) bool {
+	for _, a := range haystack {
+		if a == needle {
+			return true
+		}
+	}
+	return false
+}
+
+func CreateFileMap (path string, pathPrefix string, fileTypes []string) (map[string]string, error) {
 	dirContent, err := ioutil.ReadDir(path)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(fileTypes) == 0 {
+		fileTypes = append(fileTypes, "all")
 	}
 
 	// Create file list.
 	var fileList = map[string]string {}
 	for _, file := range dirContent {
 		if strings.Index(file.Name(), ".") == 0 {
+			// No dot-files or directories will be added.
 			continue
 		}
 
 		if file.IsDir()  {
-			tmp, err := CreateFileMap(filepath.Join(path, file.Name()))
+			tmp, err := CreateFileMap(filepath.Join(path, file.Name()), "src", fileTypes)
 			if err != nil {
 				return nil, err
 			}
 			for t, p := range tmp {
-				fileList[filepath.Join(file.Name(), t)] = p
+				fileList[filepath.Join(pathPrefix, file.Name(), t)] = p
 			}
 		} else {
-			fileList[file.Name()] = filepath.Join(path, file.Name())
+			if fileTypes[0] != "all" && !contains(fileTypes, filepath.Ext(file.Name())) {
+				log.Debug().Msg(filepath.Ext(file.Name()))
+				continue
+			}
+
+			fileList[filepath.Join(pathPrefix, file.Name())] = filepath.Join(path, file.Name())
 		}
 	}
 

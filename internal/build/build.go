@@ -58,11 +58,7 @@ func Build(directory string) error {
 func buildSourcePackage(directory, releaseVersion string, pkg control.Package) error {
 	pkgName := fmt.Sprintf("%s_%s.pkg", pkg.Package, releaseVersion)
 
-/*	cmd := exec.Command("tar", "-czvf", "build/"+pkgName, ".")
-	cmd.Dir = directory
-	cmd.Stdout = ioutil.Discard*/
-
-	dir, err := util.CreateFileMap(directory)
+	dir, err := util.CreateFileMap(directory, "src", []string {".go", ".md", ".mod", ".sum"})
 	if err != nil {
 		return err
 	}
@@ -70,10 +66,6 @@ func buildSourcePackage(directory, releaseVersion string, pkg control.Package) e
 	if err := util.CreateTar(filepath.Join("build", pkgName), dir, true); err != nil {
 		return err
 	}
-
-	/*if err := cmd.Run(); err != nil {
-		return err
-	}*/
 
 	return nil
 }
