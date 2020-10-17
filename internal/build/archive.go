@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+// ArchiveEntry
 // A tiny struct to contain data for a specific entry that will be
 // archived into a pkg file.
 type ArchiveEntry struct {
@@ -17,6 +18,7 @@ type ArchiveEntry struct {
 	ArchivePath string
 }
 
+// CreateFileMap
 // Creates a slice with all files in a specific directory that should be added to the archive.
 // The resulting value is a ArchiveEntry, which maps a filepath to an archive path.
 func CreateFileMap(path string, pathPrefix string, fileTypes []string) ([]ArchiveEntry, error) {
@@ -62,6 +64,7 @@ func CreateFileMap(path string, pathPrefix string, fileTypes []string) ([]Archiv
 	return fileList, nil
 }
 
+// CreateTar
 // Create a tar file from a set of ArchiveEntries.
 func CreateTar(path string, files []ArchiveEntry, overwrite bool) error {
 	if !overwrite {
