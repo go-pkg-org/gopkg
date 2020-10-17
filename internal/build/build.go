@@ -3,6 +3,7 @@ package build
 import (
 	"fmt"
 	"github.com/go-pkg-org/gopkg/internal/control"
+	"github.com/rs/zerolog/log"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -33,8 +34,6 @@ func Build(directory string) error {
 	// and install them
 
 	for _, pkg := range m.Packages {
-		fmt.Printf("Building %s\n", pkg.Package)
-
 		var err error
 		if pkg.IsSource() {
 			if err = buildSourcePackage(directory, releaseVersion, pkg); err != nil {
@@ -56,6 +55,8 @@ func Build(directory string) error {
 
 func buildSourcePackage(directory, releaseVersion string, pkg control.Package) error {
 	pkgName := fmt.Sprintf("%s_%s.pkg", pkg.Package, releaseVersion)
+	log.Debug().Str("package", pkgName).Msg("Building source package")
+
 	cmd := exec.Command("tar", "-czvf", "build/"+pkgName, ".")
 	cmd.Dir = directory
 	cmd.Stdout = ioutil.Discard
@@ -69,6 +70,7 @@ func buildSourcePackage(directory, releaseVersion string, pkg control.Package) e
 func buildBinaryPackage(directory, releaseVersion, targetOs, targetArch string, pkg control.Package) error {
 	pkgName := fmt.Sprintf("%s_%s_%s_%s", pkg.Package, releaseVersion, targetOs, targetArch)
 	buildDir := fmt.Sprintf("build/%s", pkgName)
+	log.Debug().Str("package", pkgName).Msg("Building binary package")
 
 	// TODO: /usr/share/bin is specific to linux/darwin arch. We should have specialized path depending on targetOs
 	cmd := exec.Command("go", "build", "-v", "-o", fmt.Sprintf("%s/usr/share/bin/%s", buildDir, pkg.Package), pkg.Main)
