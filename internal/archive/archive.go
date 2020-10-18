@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 // Entry is a tiny struct to contain data for a specific
@@ -29,12 +28,12 @@ func CreateFileMap(path string, pathPrefix string, fileTypes []string) ([]Entry,
 	// Create file list.
 	var fileList []Entry
 	for _, file := range dirContent {
-		if strings.Index(file.Name(), ".") == 0 {
-			// No dot-files or directories will be added.
-			continue
-		}
-
 		if file.IsDir() {
+			if file.Name() == ".git" || file.Name() == ".gopkg" {
+				// The above directories should _not_ be included.
+				continue
+			}
+
 			tmp, err := CreateFileMap(filepath.Join(path, file.Name()), pathPrefix, fileTypes)
 			if err != nil {
 				return nil, err
