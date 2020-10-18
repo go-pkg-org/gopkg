@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 )
 
+// GoPkgDir is the directory where gopkg meta files are placed.
 const GoPkgDir = ".gopkg"
 
 // CreateCtrlDirectory create a brand new control directory at given path
