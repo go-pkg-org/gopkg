@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/go-pkg-org/gopkg/internal/build"
 	"github.com/urfave/cli/v2"
 	"os"
@@ -10,18 +9,27 @@ import (
 
 // ExecBuild execute the `gopkg build` command
 func ExecBuild(c *cli.Context) error {
-	if !c.Args().Present() {
-		return fmt.Errorf("missing control-directory")
+	path := c.Args().First()
+	if path == "" {
+		path = "."
 	}
 
-	realPath := c.Args().First()
-	if !filepath.IsAbs(realPath) {
+	absolutePath, err := getAbsolutePath(path)
+	if err != nil {
+		return err
+	}
+
+	return build.Build(absolutePath)
+}
+
+func getAbsolutePath(path string) (string, error) {
+	if !filepath.IsAbs(path) {
 		wd, err := os.Getwd()
 		if err != nil {
-			return err
+			return "", err
 		}
-		realPath = filepath.Join(wd, realPath)
+		return filepath.Join(wd, path), nil
 	}
 
-	return build.Build(realPath)
+	return path, nil
 }

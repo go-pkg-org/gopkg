@@ -18,7 +18,7 @@ func main() {
 		Authors: []*cli.Author{
 			{"Aloïs Micard", "alois@micard.lu"},
 			{"Fredrik Forsmo", "hello@frozzare.com"},
-			{"Johannes", "johannes@jitesoft.com"},
+			{"Johannes Tegnér", "johannes@jitesoft.com"},
 		},
 		Commands: []*cli.Command{
 			{
