@@ -35,7 +35,7 @@ func Build(directory string) error {
 	// and install them
 
 	for _, pkg := range m.Packages {
-		log.Info().Msgf("Building %s\n", pkg.Package)
+		log.Info().Str("package", pkg.Package).Msg("Building source package")
 
 		var err error
 		if pkg.IsSource() {
@@ -68,7 +68,7 @@ func buildSourcePackage(directory, releaseVersion string, pkg control.Package) e
 		return err
 	}
 
-	log.Info().Msgf("Successfully build %s\n", pkgName)
+	log.Info().Str("package", pkg.Package).Msg("Successfully built package")
 	return nil
 }
 
@@ -102,6 +102,6 @@ func buildBinaryPackage(directory, releaseVersion, targetOs, targetArch string, 
 		return err
 	}
 
-	log.Info().Msgf("Successfully build %s.pkg\n", pkgName)
+	log.Info().Str("package", pkg.Package).Msg("Successfully built package")
 	return nil
 }
