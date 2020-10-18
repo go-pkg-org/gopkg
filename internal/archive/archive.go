@@ -18,9 +18,9 @@ type Entry struct {
 	ArchivePath string
 }
 
-// CreateFileMap creates a slice with all files in a specific directory that should be added to the archive.
+// CreateEntries creates a slice with all files in a specific directory that should be added to the archive.
 // The resulting value is a Entry, which maps a filepath to an archive path.
-func CreateFileMap(path string, pathPrefix string, fileTypes []string) ([]Entry, error) {
+func CreateEntries(path string, pathPrefix string, fileTypes []string) ([]Entry, error) {
 	dirContent, err := ioutil.ReadDir(path)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func CreateFileMap(path string, pathPrefix string, fileTypes []string) ([]Entry,
 				continue
 			}
 
-			tmp, err := CreateFileMap(filepath.Join(path, file.Name()), pathPrefix, fileTypes)
+			tmp, err := CreateEntries(filepath.Join(path, file.Name()), pathPrefix, fileTypes)
 			if err != nil {
 				return nil, err
 			}

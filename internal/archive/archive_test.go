@@ -16,7 +16,7 @@ func TestCreateFileMapNormal(t *testing.T) {
 	txtFile, _ := ioutil.TempFile(dir, "*.txt")
 	xmlFile, _ := ioutil.TempFile(dir, "*.xml")
 
-	result, _ := CreateFileMap(dir, "some/prefix", []string{})
+	result, _ := CreateEntries(dir, "some/prefix", []string{})
 
 	expectedPaths := []string{
 		filepath.Join(jsonFile.Name()),
@@ -42,7 +42,7 @@ func TestCreateFileMapNormal(t *testing.T) {
 		}
 	}
 
-	result, _ = CreateFileMap(dir, "some/prefix", []string{".txt", ".json"})
+	result, _ = CreateEntries(dir, "some/prefix", []string{".txt", ".json"})
 	expectedPaths = []string{
 		filepath.Join(jsonFile.Name()),
 		filepath.Join(txtFile.Name()),

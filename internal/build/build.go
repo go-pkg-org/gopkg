@@ -57,7 +57,7 @@ func Build(directory string) error {
 func buildSourcePackage(directory, releaseVersion, importPath string, pkg control.Package) error {
 	pkgName := fmt.Sprintf("%s_%s-dev.pkg", pkg.Package, releaseVersion)
 
-	dir, err := archive.CreateFileMap(directory, importPath, []string{})
+	dir, err := archive.CreateEntries(directory, importPath, []string{})
 	if err != nil {
 		return err
 	}
