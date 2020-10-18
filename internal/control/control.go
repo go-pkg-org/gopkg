@@ -6,12 +6,13 @@ import (
 	"path/filepath"
 )
 
-const goPkgDir = "gopkg"
+// GoPkgDir is the directory where gopkg meta files are placed.
+const GoPkgDir = ".gopkg"
 
 // CreateCtrlDirectory create a brand new control directory at given path
 // using given details
 func CreateCtrlDirectory(path, version, uploader string, metadata Metadata) error {
-	rootDir := filepath.Join(path, goPkgDir)
+	rootDir := filepath.Join(path, GoPkgDir)
 
 	if _, err := os.Stat(rootDir); err == nil {
 		return fmt.Errorf("%s already exist", rootDir)
@@ -40,7 +41,7 @@ func CreateCtrlDirectory(path, version, uploader string, metadata Metadata) erro
 // ReadCtrlDirectory reads control directory at given path
 // and returns metadata & changelog
 func ReadCtrlDirectory(path string) (Metadata, Changelog, error) {
-	rootDir := filepath.Join(path, goPkgDir)
+	rootDir := filepath.Join(path, GoPkgDir)
 
 	m, err := readMetadata(rootDir)
 	if err != nil {
