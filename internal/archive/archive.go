@@ -63,7 +63,7 @@ func CreateEntries(path string, pathPrefix string, fileTypes []string) ([]Entry,
 
 // Read reads a package and returns content.
 func Read(path string) (map[string][]byte, error) {
-	var result map[string][]byte = map[string][]byte{}
+	result := map[string][]byte{}
 	file, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err

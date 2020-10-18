@@ -4,7 +4,6 @@ import (
 	util "github.com/go-pkg-org/gopkg/internal/util"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -78,32 +77,32 @@ func TestRead(t *testing.T) {
 
 	jsonFile, _ := ioutil.TempFile(dir, "*.json")
 	jsonFile.WriteString("This is a json file")
+	jsonFile.Close()
 	txtFile, _ := ioutil.TempFile(dir, "*.txt")
 	txtFile.WriteString("This is a txt file")
+	txtFile.Close()
 	xmlFile, _ := ioutil.TempFile(dir, "*.xml")
 	xmlFile.WriteString("This is an xml file")
-
 	xmlFile.Close()
-	txtFile.Close()
-	jsonFile.Close()
 
-	// Create a tar file to test on in temp dir.
-	cmd := exec.Command("tar", "-cf", "out.pkg",
-		filepath.Base(jsonFile.Name()),
-		filepath.Base(txtFile.Name()),
-		filepath.Base(xmlFile.Name()),
-	)
-	cmd.Dir = dir
-	cmd.Run()
+	err := Create(filepath.Join(dir, "out.pkg"), []Entry{
+		{xmlFile.Name(), "test/xmlfile.xml"},
+		{jsonFile.Name(), "jsonfile.json"},
+		{txtFile.Name(), "txtfile.txt"},
+	}, true)
+
+	if err != nil {
+		t.Errorf("failed to create archive: %s", err)
+	}
 
 	list, err := Read(filepath.Join(dir, "out.pkg"))
 	if err != nil {
 		t.Errorf("failed to read the archive: %s", err)
 	}
 
-	jsonContent := string(list[filepath.Base(jsonFile.Name())])
-	xmlContent := string(list[filepath.Base(xmlFile.Name())])
-	txtContent := string(list[filepath.Base(txtFile.Name())])
+	jsonContent := string(list["jsonfile.json"])
+	xmlContent := string(list["test/xmlfile.xml"])
+	txtContent := string(list["txtfile.txt"])
 
 	if strings.EqualFold(jsonContent, "This is a json file") {
 		t.Errorf("Json file could not be read.")
