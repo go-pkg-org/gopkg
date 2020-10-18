@@ -9,14 +9,14 @@ import (
 
 func TestCreateFileMapNormal(t *testing.T) {
 	cwd, _ := os.Getwd()
-	result, _ := CreateFileMap(filepath.Join(cwd, "testfiles"), "some/prefix", []string {})
+	result, _ := CreateFileMap(filepath.Join(cwd, "testfiles"), "some/prefix", []string{})
 
-	expectedPaths := []string {
+	expectedPaths := []string{
 		filepath.Join(cwd, "testfiles", "test.txt"),
 		filepath.Join(cwd, "testfiles", "test.json"),
 		filepath.Join(cwd, "testfiles", "test.xml"),
 	}
-	expectedArchivePaths := []string {
+	expectedArchivePaths := []string{
 		filepath.Join("some", "prefix", "test.txt"),
 		filepath.Join("some", "prefix", "test.json"),
 		filepath.Join("some", "prefix", "test.xml"),
@@ -38,13 +38,13 @@ func TestCreateFileMapNormal(t *testing.T) {
 
 func TestCreateFileMapSpecificType(t *testing.T) {
 	cwd, _ := os.Getwd()
-	result, _ := CreateFileMap(filepath.Join(cwd, "testfiles"), "some/prefix", []string {".txt", ".json"})
+	result, _ := CreateFileMap(filepath.Join(cwd, "testfiles"), "some/prefix", []string{".txt", ".json"})
 
-	expectedPaths := []string {
+	expectedPaths := []string{
 		filepath.Join(cwd, "testfiles", "test.txt"),
 		filepath.Join(cwd, "testfiles", "test.json"),
 	}
-	expectedArchivePaths := []string {
+	expectedArchivePaths := []string{
 		filepath.Join("some", "prefix", "test.txt"),
 		filepath.Join("some", "prefix", "test.json"),
 	}
