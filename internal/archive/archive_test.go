@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestCreateFileMapNormal(t *testing.T) {
+func TestCreateEntries(t *testing.T) {
 	dir, _ := ioutil.TempDir("", "gopkg_*")
 	t.Cleanup(func() {
 		os.RemoveAll(dir)
@@ -66,6 +66,31 @@ func TestCreateFileMapNormal(t *testing.T) {
 		if !util.Contains(expectedArchivePaths, f.ArchivePath) {
 			t.Errorf("%s did not exist in expected archive paths", f.ArchivePath)
 		}
+	}
+}
+
+func TestWrite(t *testing.T) {
+	dir, _ := ioutil.TempDir("", "gopkg_*")
+	t.Cleanup(func() {
+		os.RemoveAll(dir)
+	})
+
+	jsonFile, _ := ioutil.TempFile(dir, "*.json")
+	txtFile, _ := ioutil.TempFile(dir, "*.txt")
+	xmlFile, _ := ioutil.TempFile(dir, "*.xml")
+
+	err := Write(filepath.Join(dir, "out.pkg"), []Entry{
+		{xmlFile.Name(), "test/xmlfile.xml"},
+		{jsonFile.Name(), "jsonfile.json"},
+		{txtFile.Name(), "txtfile.txt"},
+	}, true)
+
+	if err != nil {
+		t.Errorf("failed to create archive: %s", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(dir, "out.pkg")); err != nil {
+		t.Errorf("archive created was not written to disk: %s", err)
 	}
 }
 
