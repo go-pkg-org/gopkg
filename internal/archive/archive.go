@@ -27,7 +27,7 @@ func CreateEntries(path string, pathPrefix string, fileTypes []string) ([]Entry,
 		return nil, err
 	}
 
-	// Create file list.
+	// Write file list.
 	var fileList []Entry
 	for _, file := range dirContent {
 		if file.IsDir() {
@@ -91,8 +91,8 @@ func Read(path string) (map[string][]byte, error) {
 	return result, nil
 }
 
-// Create creates a tar file from a set of ArchiveEntries.
-func Create(path string, files []Entry, overwrite bool) error {
+// Write creates a tar file from a set of ArchiveEntries.
+func Write(path string, files []Entry, overwrite bool) error {
 	if !overwrite {
 		if _, err := os.Stat(path); err != nil {
 			return fmt.Errorf("failed to create new tar source (file already exist)")

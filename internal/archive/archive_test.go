@@ -85,7 +85,7 @@ func TestRead(t *testing.T) {
 	xmlFile.WriteString("This is an xml file")
 	xmlFile.Close()
 
-	err := Create(filepath.Join(dir, "out.pkg"), []Entry{
+	err := Write(filepath.Join(dir, "out.pkg"), []Entry{
 		{xmlFile.Name(), "test/xmlfile.xml"},
 		{jsonFile.Name(), "jsonfile.json"},
 		{txtFile.Name(), "txtfile.txt"},
