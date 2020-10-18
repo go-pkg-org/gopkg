@@ -2,7 +2,9 @@ package build
 
 import (
 	"fmt"
+	"github.com/go-pkg-org/gopkg/internal/archive"
 	"github.com/go-pkg-org/gopkg/internal/control"
+	"github.com/rs/zerolog/log"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -27,14 +29,12 @@ func Build(directory string) error {
 
 	releaseVersion := c.Releases[len(c.Releases)-1].Version
 
-	fmt.Printf("Control package: %s %s\n\n", m.Package, releaseVersion)
+	log.Info().Msgf("Control package: %s %s\n\n", m.Package, releaseVersion)
 
 	// TODO: when supporting dependencies we must fetch it from there
 	// and install them
 
 	for _, pkg := range m.Packages {
-		fmt.Printf("Building %s\n", pkg.Package)
-
 		var err error
 		if pkg.IsSource() {
 			if err = buildSourcePackage(directory, releaseVersion, pkg); err != nil {
@@ -55,23 +55,26 @@ func Build(directory string) error {
 }
 
 func buildSourcePackage(directory, releaseVersion string, pkg control.Package) error {
-	pkgName := fmt.Sprintf("%s_%s.pkg", pkg.Package, releaseVersion)
-	cmd := exec.Command("tar", "-czvf", "build/"+pkgName, ".")
-	cmd.Dir = directory
-	cmd.Stdout = ioutil.Discard
-	if err := cmd.Run(); err != nil {
+	pkgName := fmt.Sprintf("%s_%s-dev.pkg", pkg.Package, releaseVersion)
+
+	dir, err := archive.CreateFileMap(directory, "", []string{})
+	if err != nil {
 		return err
 	}
 
+	if err := archive.Create(filepath.Join("build", pkgName), dir, true); err != nil {
+		return err
+	}
+
+	log.Info().Str("package", pkg.Package).Msg("Successfully built source package")
 	return nil
 }
 
 func buildBinaryPackage(directory, releaseVersion, targetOs, targetArch string, pkg control.Package) error {
 	pkgName := fmt.Sprintf("%s_%s_%s_%s", pkg.Package, releaseVersion, targetOs, targetArch)
-	buildDir := fmt.Sprintf("build/%s", pkgName)
+	buildDir := filepath.Join("build", pkgName)
 
-	// TODO: /usr/share/bin is specific to linux/darwin arch. We should have specialized path depending on targetOs
-	cmd := exec.Command("go", "build", "-v", "-o", fmt.Sprintf("%s/usr/share/bin/%s", buildDir, pkg.Package), pkg.Main)
+	cmd := exec.Command("go", "build", "-v", "-o", filepath.Join(buildDir, pkg.Package), pkg.Main)
 	cmd.Dir = directory
 	cmd.Stdout = ioutil.Discard
 	cmd.Stderr = os.Stderr
@@ -80,15 +83,23 @@ func buildBinaryPackage(directory, releaseVersion, targetOs, targetArch string, 
 		return err
 	}
 
-	// finally create tar archive
-	cmd = exec.Command("tar", "-czvf", "build/"+pkgName+".pkg", "-C", buildDir, ".") // TODO: strip '.'
-	cmd.Dir = directory
-	cmd.Stdout = ioutil.Discard
-	if err := cmd.Run(); err != nil {
+	// Save the package in `build/packageName.pkg`
+	err := archive.Create(filepath.Join("build", pkgName+".pkg"), []archive.Entry{
+		{
+			FilePath:    filepath.Join(buildDir, pkg.Package),
+			ArchivePath: filepath.Join("bin", pkg.Package),
+		},
+	}, true)
+
+	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Successfully build %s.pkg\n", pkgName)
+	// Remove the build file and keep package.
+	if err := os.RemoveAll(filepath.Join(buildDir)); err != nil {
+		return err
+	}
 
+	log.Info().Str("package", pkg.Package).Msg("Successfully built binary package")
 	return nil
 }
