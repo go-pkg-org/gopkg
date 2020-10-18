@@ -1,4 +1,4 @@
-package archive
+package pkg
 
 import (
 	util "github.com/go-pkg-org/gopkg/internal/util"
@@ -139,4 +139,68 @@ func TestRead(t *testing.T) {
 		t.Errorf("Txt file could not be read.")
 	}
 
+}
+
+func TestGetName(t *testing.T) {
+	name, err := GetName("github-creekorful-mvnparser", "1.0.0", "", "", true)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if name != "github-creekorful-mvnparser_1.0.0-dev.pkg" {
+		t.Errorf("wrong package name (%s)", name)
+	}
+
+	name, err = GetName("gohello", "1.0.0", "linux", "amd64", false)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if name != "gohello_1.0.0_linux_amd64.pkg" {
+		t.Error(err)
+	}
+}
+
+func TestParseName(t *testing.T) {
+	name, ver, _, _, isSrc, err := ParseName("github-creekorful-mvnparser_1.0.0-dev.pkg")
+	if err != nil {
+		t.Error(err)
+	}
+
+	if name != "github-creekorful-mvnparser" {
+		t.Error("wrong package name")
+	}
+
+	if ver != "1.0.0" {
+		t.Error("wrong package version")
+	}
+
+	if !isSrc {
+		t.Error("package should be source")
+	}
+
+	name, ver, os, arch, isSrc, err := ParseName("gohello_1.0.0_linux_amd64.pkg")
+	if err != nil {
+		t.Error(err)
+	}
+
+	if name != "gohello" {
+		t.Error("wrong package name")
+	}
+
+	if ver != "1.0.0" {
+		t.Error("wrong package version")
+	}
+
+	if os != "linux" {
+		t.Error("wrong os")
+	}
+
+	if arch != "amd64" {
+		t.Error("wrong arch")
+	}
+
+	if isSrc {
+		t.Error("package should be binary")
+	}
 }
