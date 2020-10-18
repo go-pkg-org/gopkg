@@ -3,7 +3,7 @@ package util
 import "testing"
 
 func TestContains(t *testing.T) {
-	slice := []string {
+	slice := []string{
 		"abc", "efg", "111", "222", "333",
 	}
 
