@@ -62,7 +62,7 @@ func buildSourcePackage(directory, releaseVersion, importPath string, pkg contro
 		return err
 	}
 
-	if err := archive.Create(filepath.Join(directory, "build", pkgName), dir, true); err != nil {
+	if err := archive.Write(filepath.Join(directory, "build", pkgName), dir, true); err != nil {
 		return err
 	}
 
@@ -84,7 +84,7 @@ func buildBinaryPackage(directory, releaseVersion, targetOs, targetArch string, 
 	}
 
 	// Save the package in `build/packageName.pkg`
-	err := archive.Create(filepath.Join(directory, "build", pkgName+".pkg"), []archive.Entry{
+	err := archive.Write(filepath.Join(directory, "build", pkgName+".pkg"), []archive.Entry{
 		{
 			FilePath:    filepath.Join(buildDir, pkg.Package),
 			ArchivePath: filepath.Join("bin", pkg.Package),

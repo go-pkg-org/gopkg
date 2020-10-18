@@ -5,12 +5,15 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
-func TestCreateFileMapNormal(t *testing.T) {
-	dir, _ := ioutil.TempDir("", "*")
-	defer os.RemoveAll(dir)
+func TestCreateEntries(t *testing.T) {
+	dir, _ := ioutil.TempDir("", "gopkg_*")
+	t.Cleanup(func() {
+		os.RemoveAll(dir)
+	})
 
 	jsonFile, _ := ioutil.TempFile(dir, "*.json")
 	txtFile, _ := ioutil.TempFile(dir, "*.txt")
@@ -64,4 +67,76 @@ func TestCreateFileMapNormal(t *testing.T) {
 			t.Errorf("%s did not exist in expected archive paths", f.ArchivePath)
 		}
 	}
+}
+
+func TestWrite(t *testing.T) {
+	dir, _ := ioutil.TempDir("", "gopkg_*")
+	t.Cleanup(func() {
+		os.RemoveAll(dir)
+	})
+
+	jsonFile, _ := ioutil.TempFile(dir, "*.json")
+	txtFile, _ := ioutil.TempFile(dir, "*.txt")
+	xmlFile, _ := ioutil.TempFile(dir, "*.xml")
+
+	err := Write(filepath.Join(dir, "out.pkg"), []Entry{
+		{xmlFile.Name(), "test/xmlfile.xml"},
+		{jsonFile.Name(), "jsonfile.json"},
+		{txtFile.Name(), "txtfile.txt"},
+	}, true)
+
+	if err != nil {
+		t.Errorf("failed to create archive: %s", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(dir, "out.pkg")); err != nil {
+		t.Errorf("archive created was not written to disk: %s", err)
+	}
+}
+
+func TestRead(t *testing.T) {
+	dir, _ := ioutil.TempDir("", "gopkg_*")
+	t.Cleanup(func() {
+		os.RemoveAll(dir)
+	})
+
+	jsonFile, _ := ioutil.TempFile(dir, "*.json")
+	jsonFile.WriteString("This is a json file")
+	jsonFile.Close()
+	txtFile, _ := ioutil.TempFile(dir, "*.txt")
+	txtFile.WriteString("This is a txt file")
+	txtFile.Close()
+	xmlFile, _ := ioutil.TempFile(dir, "*.xml")
+	xmlFile.WriteString("This is an xml file")
+	xmlFile.Close()
+
+	err := Write(filepath.Join(dir, "out.pkg"), []Entry{
+		{xmlFile.Name(), "test/xmlfile.xml"},
+		{jsonFile.Name(), "jsonfile.json"},
+		{txtFile.Name(), "txtfile.txt"},
+	}, true)
+
+	if err != nil {
+		t.Errorf("failed to create archive: %s", err)
+	}
+
+	list, err := Read(filepath.Join(dir, "out.pkg"))
+	if err != nil {
+		t.Errorf("failed to read the archive: %s", err)
+	}
+
+	jsonContent := string(list["jsonfile.json"])
+	xmlContent := string(list["test/xmlfile.xml"])
+	txtContent := string(list["txtfile.txt"])
+
+	if strings.EqualFold(jsonContent, "This is a json file") {
+		t.Errorf("Json file could not be read.")
+	}
+	if strings.EqualFold(xmlContent, "This is an xml file") {
+		t.Errorf("Xml file could not be read.")
+	}
+	if strings.EqualFold(txtContent, "This is a txt file") {
+		t.Errorf("Txt file could not be read.")
+	}
+
 }
