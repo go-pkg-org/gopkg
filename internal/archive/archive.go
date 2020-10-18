@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/go-pkg-org/gopkg/internal/control"
 	"github.com/go-pkg-org/gopkg/internal/util"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -58,6 +59,36 @@ func CreateEntries(path string, pathPrefix string, fileTypes []string) ([]Entry,
 	}
 
 	return fileList, nil
+}
+
+// Read reads a package and returns content.
+func Read(path string) (map[string][]byte, error) {
+	var result map[string][]byte = map[string][]byte{}
+	file, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	buffer := bytes.NewBuffer(file)
+
+	tr := tar.NewReader(buffer)
+	for {
+		header, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		out := bytes.NewBuffer(make([]byte, header.Size))
+		if _, err := io.Copy(out, tr); err != nil {
+			return nil, err
+		}
+
+		result[header.Name] = out.Bytes()
+	}
+	return result, nil
 }
 
 // Create creates a tar file from a set of ArchiveEntries.
