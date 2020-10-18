@@ -41,23 +41,13 @@ func TestCreateFileMapNormal(t *testing.T) {
 			t.Errorf("%s did not exist in expected archive paths", f.ArchivePath)
 		}
 	}
-}
 
-func TestCreateFileMapSpecificType(t *testing.T) {
-	dir, _ := ioutil.TempDir("", "*")
-	defer os.RemoveAll(dir)
-
-	jsonFile, _ := ioutil.TempFile(dir, "*.json")
-	txtFile, _ := ioutil.TempFile(dir, "*.txt")
-	ioutil.TempFile(dir, "*.xml")
-
-	result, _ := CreateFileMap(dir, "some/prefix", []string{".txt", ".json"})
-
-	expectedPaths := []string{
+	result, _ = CreateFileMap(dir, "some/prefix", []string{".txt", ".json"})
+	expectedPaths = []string{
 		filepath.Join(jsonFile.Name()),
 		filepath.Join(txtFile.Name()),
 	}
-	expectedArchivePaths := []string{
+	expectedArchivePaths = []string{
 		filepath.Join("some", "prefix", filepath.Base(txtFile.Name())),
 		filepath.Join("some", "prefix", filepath.Base(jsonFile.Name())),
 	}
@@ -75,3 +65,4 @@ func TestCreateFileMapSpecificType(t *testing.T) {
 		}
 	}
 }
+
