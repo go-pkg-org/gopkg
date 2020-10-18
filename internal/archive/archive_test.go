@@ -9,7 +9,7 @@ import (
 
 func TestCreateFileMapNormal(t *testing.T) {
 	cwd, _ := os.Getwd()
-	result, _ := CreateFileMap(filepath.Join(cwd, "testfiles"), "some/prefix", []string {"all"})
+	result, _ := CreateFileMap(filepath.Join(cwd, "testfiles"), "some/prefix", []string {})
 
 	expectedPaths := []string {
 		filepath.Join(cwd, "testfiles", "test.txt"),
