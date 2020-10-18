@@ -3,6 +3,7 @@ package make
 import (
 	"fmt"
 	"github.com/go-pkg-org/gopkg/internal/control"
+	"github.com/go-pkg-org/gopkg/internal/util"
 	"github.com/rs/zerolog/log"
 	"io/ioutil"
 	"os"
@@ -29,14 +30,26 @@ func Make(importPath string) error {
 	// Remove any leading v since we doesn't want it in gopkg archive
 	cleanVersion := strings.TrimPrefix(version, "v")
 
-	// Then get its dependencies
-	deps, err := getMissingDeps(pkgName, importPath)
+	// Get defined importPaths (dependencies)
+	deps, err := getImportPaths(pkgName)
 	if err != nil {
 		return err
 	}
 
-	if len(deps) > 0 {
-		log.Warn().Strs("dependencies", deps).Msg("Dependencies that need to be packaged first")
+	// Get std dependencies (builtin)
+	stdDeps, err := getStdDeps()
+	if err != nil {
+		return err
+	}
+
+	// Then get its dependencies
+	missingDeps, err := getMissingDeps(deps, stdDeps, importPath)
+	if err != nil {
+		return err
+	}
+
+	if len(missingDeps) > 0 {
+		log.Warn().Strs("dependencies", missingDeps).Msg("Dependencies that need to be packaged first")
 		return nil // TODO error instead?
 	}
 
@@ -77,19 +90,7 @@ func Make(importPath string) error {
 // - remove the 'std' dependencies (builtin)
 // - remove the dependencies that belongs to the project we want to package
 // todo remove already packaged deps
-func getMissingDeps(path, importPath string) ([]string, error) {
-	// Then get its dependencies
-	deps, err := getDeps(path)
-	if err != nil {
-		return nil, err
-	}
-
-	// Get std dependencies
-	stdDeps, err := getStdDeps()
-	if err != nil {
-		return nil, err
-	}
-
+func getMissingDeps(deps, stdDeps []string, importPath string) ([]string, error) {
 	// Get 'real' dependencies
 	// i.e exclude std dependencies
 	var realDeps []string
@@ -111,14 +112,27 @@ func getMissingDeps(path, importPath string) ([]string, error) {
 			continue
 		}
 
-		realDeps = append(realDeps, dep)
+		// Filter dep to make sure we're only adding 'root' import path for the dependencies
+		// and also prevent duplicates
+		rootDep := ""
+		parts := strings.Split(dep, "/")
+		if len(parts) == 3 {
+			rootDep = dep
+		} else {
+			rootDep = fmt.Sprintf("%s/%s/%s", parts[0], parts[1], parts[2])
+		}
+
+		// And make sure it's not already packaged
+		if !util.Contains(realDeps, rootDep) {
+			realDeps = append(realDeps, rootDep)
+		}
 	}
 
 	return realDeps, nil
 }
 
-// Get the package define dependencies
-func getDeps(path string) ([]string, error) {
+// Get the package define import paths
+func getImportPaths(path string) ([]string, error) {
 	cmd := exec.Command("go", "list", "-f", "'{{ join .Imports \"\\n\" }}'", "./...")
 	cmd.Dir = path
 	cmd.Stderr = os.Stderr

@@ -72,6 +72,36 @@ func TestGetGitVersion(t *testing.T) {
 	}
 }
 
+func TestGetMissingDeps(t *testing.T) {
+	deps := []string{"github.com/jedib0t/go-pretty/v6/table", "github.com/jedib0t/go-pretty/v6/text",
+		"github.com/muesli/termenv", "golang.org/x/crypto/ssh/terminal", "golang.org/x/sys/unix",
+		"fmt", "os", "os/exec", "github.com/creekorful/mvnparser/utils"}
+	stdDeps := []string{"fmt", "os", "os/exec"}
+	importPath := "github.com/creekorful/mvnparser"
+
+	missingDeps, err := getMissingDeps(deps, stdDeps, importPath)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(missingDeps) != 4 {
+		t.Errorf("Wrong number of missing dependencies found")
+	}
+
+	// make sure we've found all dependencies
+	// TODO better?
+	depsToFind := map[string]bool{"github.com/muesli/termenv": false,
+		"github.com/jedib0t/go-pretty": false, "golang.org/x/crypto": false, "golang.org/x/sys": false}
+	for _, d := range missingDeps {
+		depsToFind[d] = true
+	}
+	for d, found := range depsToFind {
+		if !found {
+			t.Errorf("Missing dep: %s", d)
+		}
+	}
+}
+
 func runGitCmd(dir string, env []string, args ...string) error {
 	cmd := exec.Command("git", args...)
 	cmd.Dir = dir
