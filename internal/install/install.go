@@ -1,7 +1,7 @@
 package install
 
 import (
-	"github.com/go-pkg-org/gopkg/internal/archive"
+	"github.com/go-pkg-org/gopkg/internal/pkg"
 	"github.com/rs/zerolog/log"
 	"io/ioutil"
 	"os"
@@ -21,7 +21,7 @@ func installFromFile(pkgPath string) error {
 	log.Info().Str("file", pkgPath).Msg("Installing package from file")
 	// todo validate arch + os
 
-	pkgContent, err := archive.Read(pkgPath)
+	pkgContent, err := pkg.Read(pkgPath)
 	if err != nil {
 		return err
 	}
