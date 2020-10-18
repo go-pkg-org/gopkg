@@ -33,6 +33,12 @@ func main() {
 				ArgsUsage: "control-directory",
 				Action:    cmd.ExecBuild,
 			},
+			{
+				Name:      "install",
+				Usage:     "install a package from path",
+				ArgsUsage: "pkg-path",
+				Action:    cmd.ExecInstall,
+			},
 		},
 	}
 
