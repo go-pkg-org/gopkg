@@ -62,7 +62,7 @@ func buildSourcePackage(directory, releaseVersion, importPath string, pkg contro
 		return err
 	}
 
-	if err := archive.Create(filepath.Join("build", pkgName), dir, true); err != nil {
+	if err := archive.Create(filepath.Join(directory, "build", pkgName), dir, true); err != nil {
 		return err
 	}
 
@@ -72,7 +72,7 @@ func buildSourcePackage(directory, releaseVersion, importPath string, pkg contro
 
 func buildBinaryPackage(directory, releaseVersion, targetOs, targetArch string, pkg control.Package) error {
 	pkgName := fmt.Sprintf("%s_%s_%s_%s", pkg.Package, releaseVersion, targetOs, targetArch)
-	buildDir := filepath.Join("build", pkgName)
+	buildDir := filepath.Join(directory, "build", pkgName)
 
 	cmd := exec.Command("go", "build", "-v", "-o", filepath.Join(buildDir, pkg.Package), pkg.Main)
 	cmd.Dir = directory
@@ -84,7 +84,7 @@ func buildBinaryPackage(directory, releaseVersion, targetOs, targetArch string, 
 	}
 
 	// Save the package in `build/packageName.pkg`
-	err := archive.Create(filepath.Join("build", pkgName+".pkg"), []archive.Entry{
+	err := archive.Create(filepath.Join(directory, "build", pkgName+".pkg"), []archive.Entry{
 		{
 			FilePath:    filepath.Join(buildDir, pkg.Package),
 			ArchivePath: filepath.Join("bin", pkg.Package),
