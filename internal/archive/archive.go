@@ -1,4 +1,4 @@
-package build
+package archive
 
 import (
 	"archive/tar"
@@ -10,27 +10,23 @@ import (
 	"strings"
 )
 
-// ArchiveEntry is a tiny struct to contain data for a specific
+// Entry is a tiny struct to contain data for a specific
 // entry that will be archived into a pkg file.
-type ArchiveEntry struct {
+type Entry struct {
 	FilePath    string
 	ArchivePath string
 }
 
 // CreateFileMap creates a slice with all files in a specific directory that should be added to the archive.
-// The resulting value is a ArchiveEntry, which maps a filepath to an archive path.
-func CreateFileMap(path string, pathPrefix string, fileTypes []string) ([]ArchiveEntry, error) {
+// The resulting value is a Entry, which maps a filepath to an archive path.
+func CreateFileMap(path string, pathPrefix string, fileTypes []string) ([]Entry, error) {
 	dirContent, err := ioutil.ReadDir(path)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(fileTypes) == 0 {
-		fileTypes = append(fileTypes, "all")
-	}
-
 	// Create file list.
-	var fileList []ArchiveEntry
+	var fileList []Entry
 	for _, file := range dirContent {
 		if strings.Index(file.Name(), ".") == 0 {
 			// No dot-files or directories will be added.
@@ -43,16 +39,16 @@ func CreateFileMap(path string, pathPrefix string, fileTypes []string) ([]Archiv
 				return nil, err
 			}
 			for _, p := range tmp {
-				fileList = append(fileList, ArchiveEntry{
+				fileList = append(fileList, Entry{
 					FilePath:    p.FilePath,
 					ArchivePath: filepath.Join(pathPrefix, file.Name(), p.ArchivePath),
 				})
 			}
 		} else {
-			if fileTypes[0] != "all" && !util.Contains(fileTypes, filepath.Ext(file.Name())) {
+			if len(fileTypes) != 0 && !util.Contains(fileTypes, filepath.Ext(file.Name())) {
 				continue
 			}
-			fileList = append(fileList, ArchiveEntry{
+			fileList = append(fileList, Entry{
 				FilePath:    filepath.Join(path, file.Name()),
 				ArchivePath: filepath.Join(pathPrefix, file.Name()),
 			})
@@ -62,8 +58,8 @@ func CreateFileMap(path string, pathPrefix string, fileTypes []string) ([]Archiv
 	return fileList, nil
 }
 
-// CreateTar creates a tar file from a set of ArchiveEntries.
-func CreateTar(path string, files []ArchiveEntry, overwrite bool) error {
+// Create creates a tar file from a set of ArchiveEntries.
+func Create(path string, files []Entry, overwrite bool) error {
 	if !overwrite {
 		if _, err := ioutil.ReadFile(path); err != nil {
 			return fmt.Errorf("failed to create new tar source (file already exist)")
@@ -97,5 +93,5 @@ func CreateTar(path string, files []ArchiveEntry, overwrite bool) error {
 		return err
 	}
 
-	return ioutil.WriteFile(path, buffer.Bytes(), 0755)
+	return ioutil.WriteFile(path, buffer.Bytes(), 0644)
 }

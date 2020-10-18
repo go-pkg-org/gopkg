@@ -1,4 +1,4 @@
-package build
+package archive
 
 import (
 	util "github.com/go-pkg-org/gopkg/internal"

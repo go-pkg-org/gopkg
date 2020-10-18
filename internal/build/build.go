@@ -2,9 +2,10 @@ package build
 
 import (
 	"fmt"
+	"github.com/go-pkg-org/gopkg/internal/archive"
 	"github.com/go-pkg-org/gopkg/internal/control"
+	"github.com/rs/zerolog/log"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -28,13 +29,13 @@ func Build(directory string) error {
 
 	releaseVersion := c.Releases[len(c.Releases)-1].Version
 
-	fmt.Printf("Control package: %s %s\n\n", m.Package, releaseVersion)
+	log.Info().Msgf("Control package: %s %s\n\n", m.Package, releaseVersion)
 
 	// TODO: when supporting dependencies we must fetch it from there
 	// and install them
 
 	for _, pkg := range m.Packages {
-		fmt.Printf("Building %s\n", pkg.Package)
+		log.Info().Msgf("Building %s\n", pkg.Package)
 
 		var err error
 		if pkg.IsSource() {
@@ -58,16 +59,16 @@ func Build(directory string) error {
 func buildSourcePackage(directory, releaseVersion string, pkg control.Package) error {
 	pkgName := fmt.Sprintf("%s_%s-dev.pkg", pkg.Package, releaseVersion)
 
-	dir, err := CreateFileMap(directory, "", []string{".go", ".md", ".mod", ".sum", "LICENSE"})
+	dir, err := archive.CreateFileMap(directory, "", []string{".go", ".md", ".mod", ".sum", "LICENSE"})
 	if err != nil {
 		return err
 	}
 
-	if err := CreateTar(filepath.Join("build", pkgName), dir, true); err != nil {
+	if err := archive.Create(filepath.Join("build", pkgName), dir, true); err != nil {
 		return err
 	}
 
-	fmt.Printf("Successfully build %s\n", pkgName)
+	log.Info().Msgf("Successfully build %s\n", pkgName)
 	return nil
 }
 
@@ -85,7 +86,7 @@ func buildBinaryPackage(directory, releaseVersion, targetOs, targetArch string, 
 	}
 
 	// Save the package in `build/packageName.pkg`
-	err := CreateTar(filepath.Join("build", pkgName+".pkg"), []ArchiveEntry{
+	err := archive.Create(filepath.Join("build", pkgName+".pkg"), []archive.Entry{
 		{
 			FilePath:    filepath.Join(buildDir, pkg.Package),
 			ArchivePath: filepath.Join("bin", pkg.Package),
@@ -93,14 +94,14 @@ func buildBinaryPackage(directory, releaseVersion, targetOs, targetArch string, 
 	}, true)
 
 	if err != nil {
-		log.Panicf("failed to build archive: %s", err)
+		return err
 	}
 
 	// Remove the build file and keep package.
 	if err := os.RemoveAll(filepath.Join(buildDir)); err != nil {
-		log.Panicf("failed to remove build artifacts: %s", err)
+		return err
 	}
 
-	fmt.Printf("Successfully build %s.pkg\n", pkgName)
+	log.Info().Msgf("Successfully build %s.pkg\n", pkgName)
 	return nil
 }
