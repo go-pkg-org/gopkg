@@ -1,6 +1,7 @@
 package install
 
 import (
+	"github.com/go-pkg-org/gopkg/internal/archive"
 	"github.com/rs/zerolog/log"
 	"io/ioutil"
 	"os"
@@ -17,14 +18,17 @@ func Install(pkgPath string) error {
 
 // todo add support for named install
 func installFromFile(pkgPath string) error {
-	log.Info().Str("file", pkgPath).Msg("Installation package from file")
+	log.Info().Str("file", pkgPath).Msg("Installing package from file")
 	// todo validate arch + os
 
-	// TODO use archive.Read(pkgPath)
+	pkgContent, err := archive.Read(pkgPath)
+	if err != nil {
+		return err
+	}
 
 	// todo centralize logic somewhere to archive package (see: https://github.com/go-pkg-org/gopkg/issues/27)
 	if strings.Contains(pkgPath, "-dev") {
-		return installSourcePackage(nil)
+		return installSourcePackage(pkgContent)
 	}
 
 	// TODO installBinaryPackage
