@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"fmt"
+	"github.com/go-pkg-org/gopkg/internal/control"
 	"github.com/go-pkg-org/gopkg/internal/util"
 	"io/ioutil"
 	"os"
@@ -29,7 +30,7 @@ func CreateFileMap(path string, pathPrefix string, fileTypes []string) ([]Entry,
 	var fileList []Entry
 	for _, file := range dirContent {
 		if file.IsDir() {
-			if file.Name() == ".git" || file.Name() == ".gopkg" {
+			if file.Name() == ".git" || file.Name() == control.GoPkgDir {
 				// The above directories should _not_ be included.
 				continue
 			}
