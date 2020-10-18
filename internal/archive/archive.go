@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/go-pkg-org/gopkg/internal/control"
 	"github.com/go-pkg-org/gopkg/internal/util"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -26,7 +27,7 @@ func CreateEntries(path string, pathPrefix string, fileTypes []string) ([]Entry,
 		return nil, err
 	}
 
-	// Create file list.
+	// Write file list.
 	var fileList []Entry
 	for _, file := range dirContent {
 		if file.IsDir() {
@@ -60,8 +61,38 @@ func CreateEntries(path string, pathPrefix string, fileTypes []string) ([]Entry,
 	return fileList, nil
 }
 
-// Create creates a tar file from a set of ArchiveEntries.
-func Create(path string, files []Entry, overwrite bool) error {
+// Read reads a package and returns content.
+func Read(path string) (map[string][]byte, error) {
+	result := map[string][]byte{}
+	file, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	buffer := bytes.NewBuffer(file)
+
+	tr := tar.NewReader(buffer)
+	for {
+		header, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		out := bytes.NewBuffer(make([]byte, header.Size))
+		if _, err := io.Copy(out, tr); err != nil {
+			return nil, err
+		}
+
+		result[header.Name] = out.Bytes()
+	}
+	return result, nil
+}
+
+// Write creates a tar file from a set of ArchiveEntries.
+func Write(path string, files []Entry, overwrite bool) error {
 	if !overwrite {
 		if _, err := os.Stat(path); err != nil {
 			return fmt.Errorf("failed to create new tar source (file already exist)")
