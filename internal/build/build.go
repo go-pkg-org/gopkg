@@ -37,7 +37,7 @@ func Build(directory string) error {
 	for _, pkg := range m.Packages {
 		var err error
 		if pkg.IsSource() {
-			if err = buildSourcePackage(directory, releaseVersion, pkg); err != nil {
+			if err = buildSourcePackage(directory, releaseVersion, m.ImportPath, pkg); err != nil {
 				return err
 			}
 		} else {
@@ -54,10 +54,10 @@ func Build(directory string) error {
 	return nil
 }
 
-func buildSourcePackage(directory, releaseVersion string, pkg control.Package) error {
+func buildSourcePackage(directory, releaseVersion, importPath string, pkg control.Package) error {
 	pkgName := fmt.Sprintf("%s_%s-dev.pkg", pkg.Package, releaseVersion)
 
-	dir, err := archive.CreateFileMap(directory, "", []string{})
+	dir, err := archive.CreateFileMap(directory, importPath, []string{})
 	if err != nil {
 		return err
 	}

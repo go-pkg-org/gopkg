@@ -47,6 +47,7 @@ func Make(importPath string) error {
 			// Create initial source package
 			{Package: pkgName + "-dev", Description: "TODO"},
 		},
+		ImportPath: importPath,
 	}
 
 	// Search for binary packages

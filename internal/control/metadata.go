@@ -14,6 +14,8 @@ const metadataFile = "metadata.yaml"
 type Metadata struct {
 	// Package is the control package name
 	Package string
+	// The Go import path
+	ImportPath string
 	// List of the package maintainers
 	// i.e who take the responsibility for uploading & managing it
 	Maintainers []string
