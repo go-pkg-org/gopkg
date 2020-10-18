@@ -59,7 +59,7 @@ func Build(directory string) error {
 func buildSourcePackage(directory, releaseVersion string, pkg control.Package) error {
 	pkgName := fmt.Sprintf("%s_%s-dev.pkg", pkg.Package, releaseVersion)
 
-	dir, err := archive.CreateFileMap(directory, "", []string{".go", ".md", ".mod", ".sum", "LICENSE"})
+	dir, err := archive.CreateFileMap(directory, "", []string{})
 	if err != nil {
 		return err
 	}

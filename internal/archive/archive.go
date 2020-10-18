@@ -4,8 +4,9 @@ import (
 	"archive/tar"
 	"bytes"
 	"fmt"
-	"github.com/go-pkg-org/gopkg/internal"
+	"github.com/go-pkg-org/gopkg/internal/util"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -61,7 +62,7 @@ func CreateFileMap(path string, pathPrefix string, fileTypes []string) ([]Entry,
 // Create creates a tar file from a set of ArchiveEntries.
 func Create(path string, files []Entry, overwrite bool) error {
 	if !overwrite {
-		if _, err := ioutil.ReadFile(path); err != nil {
+		if _, err := os.Stat(path); err != nil {
 			return fmt.Errorf("failed to create new tar source (file already exist)")
 		}
 	}

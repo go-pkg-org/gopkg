@@ -1,25 +1,32 @@
 package archive
 
 import (
-	util "github.com/go-pkg-org/gopkg/internal"
+	util "github.com/go-pkg-org/gopkg/internal/util"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 )
 
 func TestCreateFileMapNormal(t *testing.T) {
-	cwd, _ := os.Getwd()
-	result, _ := CreateFileMap(filepath.Join(cwd, "testfiles"), "some/prefix", []string{})
+	dir, _ := ioutil.TempDir("", "*")
+	defer os.RemoveAll(dir)
+
+	jsonFile, _ := ioutil.TempFile(dir, "*.json")
+	txtFile, _ := ioutil.TempFile(dir, "*.txt")
+	xmlFile, _ := ioutil.TempFile(dir, "*.xml")
+
+	result, _ := CreateFileMap(dir, "some/prefix", []string{})
 
 	expectedPaths := []string{
-		filepath.Join(cwd, "testfiles", "test.txt"),
-		filepath.Join(cwd, "testfiles", "test.json"),
-		filepath.Join(cwd, "testfiles", "test.xml"),
+		filepath.Join(jsonFile.Name()),
+		filepath.Join(txtFile.Name()),
+		filepath.Join(xmlFile.Name()),
 	}
 	expectedArchivePaths := []string{
-		filepath.Join("some", "prefix", "test.txt"),
-		filepath.Join("some", "prefix", "test.json"),
-		filepath.Join("some", "prefix", "test.xml"),
+		filepath.Join("some", "prefix", filepath.Base(txtFile.Name())),
+		filepath.Join("some", "prefix", filepath.Base(jsonFile.Name())),
+		filepath.Join("some", "prefix", filepath.Base(xmlFile.Name())),
 	}
 
 	if len(result) != len(expectedPaths) {
@@ -37,16 +44,22 @@ func TestCreateFileMapNormal(t *testing.T) {
 }
 
 func TestCreateFileMapSpecificType(t *testing.T) {
-	cwd, _ := os.Getwd()
-	result, _ := CreateFileMap(filepath.Join(cwd, "testfiles"), "some/prefix", []string{".txt", ".json"})
+	dir, _ := ioutil.TempDir("", "*")
+	defer os.RemoveAll(dir)
+
+	jsonFile, _ := ioutil.TempFile(dir, "*.json")
+	txtFile, _ := ioutil.TempFile(dir, "*.txt")
+	ioutil.TempFile(dir, "*.xml")
+
+	result, _ := CreateFileMap(dir, "some/prefix", []string{".txt", ".json"})
 
 	expectedPaths := []string{
-		filepath.Join(cwd, "testfiles", "test.txt"),
-		filepath.Join(cwd, "testfiles", "test.json"),
+		filepath.Join(jsonFile.Name()),
+		filepath.Join(txtFile.Name()),
 	}
 	expectedArchivePaths := []string{
-		filepath.Join("some", "prefix", "test.txt"),
-		filepath.Join("some", "prefix", "test.json"),
+		filepath.Join("some", "prefix", filepath.Base(txtFile.Name())),
+		filepath.Join("some", "prefix", filepath.Base(jsonFile.Name())),
 	}
 
 	if len(result) != len(expectedPaths) {
