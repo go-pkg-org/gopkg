@@ -32,6 +32,7 @@ func CreateFileMap(path string, pathPrefix string, fileTypes []string) ([]Entry,
 		if file.IsDir() {
 			if file.Name() == ".git" || file.Name() == control.GoPkgDir {
 				// The above directories should _not_ be included.
+				// TODO: https://github.com/go-pkg-org/gopkg/issues/23
 				continue
 			}
 
