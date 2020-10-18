@@ -289,5 +289,9 @@ func getGitVersion(gitDir string) (string, bool, error) {
 }
 
 func getDefaultTargets() map[string][]string {
-	return map[string][]string{"linux": {"amd64"}} // TODO add more
+	// TODO add more
+	return map[string][]string{
+		"linux":  {"amd64"},
+		"darwin": {"amd64"},
+	}
 }

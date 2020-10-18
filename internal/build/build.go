@@ -81,7 +81,7 @@ func buildBinaryPackage(directory, releaseVersion, targetOs, targetArch string, 
 
 	buildDir := filepath.Join(directory, "build", pkgName)
 
-	cmd := exec.Command("go", "build", "-v", "-o", filepath.Join(buildDir, p.Package), p.Main)
+	cmd := exec.Command("go", "build", "-o", filepath.Join(buildDir, p.Package), p.Main)
 	cmd.Dir = directory
 	cmd.Stdout = ioutil.Discard
 	cmd.Stderr = os.Stderr
@@ -107,6 +107,6 @@ func buildBinaryPackage(directory, releaseVersion, targetOs, targetArch string, 
 		return err
 	}
 
-	log.Info().Str("package", p.Package).Msg("Successfully built binary package")
+	log.Info().Str("package", pkgName).Msg("Successfully built binary package")
 	return nil
 }

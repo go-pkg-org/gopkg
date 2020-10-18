@@ -1,38 +1,49 @@
 package install
 
 import (
+	"fmt"
 	"github.com/go-pkg-org/gopkg/internal/pkg"
 	"github.com/rs/zerolog/log"
 	"io/ioutil"
 	"os"
 	"os/user"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
 // Install install given package
 // todo support multiple packages
 func Install(pkgPath string) error {
-	return installFromFile(pkgPath)
-}
-
-// todo add support for named install
-func installFromFile(pkgPath string) error {
-	log.Info().Str("file", pkgPath).Msg("Installing package from file")
-	// todo validate arch + os
-
-	pkgContent, err := pkg.Read(pkgPath)
+	pkgName, err := installFromFile(pkgPath)
 	if err != nil {
 		return err
 	}
+	log.Info().Str("package", pkgName).Msg("Successfully installed package")
 
-	// todo centralize logic somewhere to archive package (see: https://github.com/go-pkg-org/gopkg/issues/27)
-	if strings.Contains(pkgPath, "-dev") {
-		return installSourcePackage(pkgContent)
+	return nil
+}
+
+// todo add support for named install
+func installFromFile(pkgPath string) (string, error) {
+	pkgName := filepath.Base(pkgPath)
+	pkgName, _, pkgOs, pkgArch, isSrc, err := pkg.ParseName(pkgName)
+	if err != nil {
+		return pkgName, err
 	}
 
-	// TODO installBinaryPackage
-	return nil
+	log.Info().Str("package", pkgName).Msg("Installing package")
+
+	pkgContent, err := pkg.Read(pkgPath)
+	if err != nil {
+		return pkgName, err
+	}
+
+	if isSrc {
+		return pkgName, installSourcePackage(pkgContent)
+	}
+
+	return pkgName, installBinaryPackage(pkgOs, pkgArch, pkgContent)
 }
 
 func installSourcePackage(pkgContent map[string][]byte) error {
@@ -59,12 +70,51 @@ func installSourcePackage(pkgContent map[string][]byte) error {
 	return nil
 }
 
-func installBinaryPackage(os, arch string, pkgContent map[string][]byte) error {
-	return nil // TODO
+func installBinaryPackage(pkgOs, pkgArch string, pkgContent map[string][]byte) error {
+	if pkgOs != runtime.GOOS {
+		return fmt.Errorf("package not supported for this os (got: %s want: %s)", pkgOs, runtime.GOOS)
+	}
+
+	if pkgArch != runtime.GOARCH {
+		return fmt.Errorf("package not supported for this arch (got: %s want: %s)", pkgArch, runtime.GOARCH)
+	}
+
+	rootDir, err := getBinaryInstallDir()
+	if err != nil {
+		return err
+	}
+
+	for path, content := range pkgContent {
+		if strings.HasPrefix(path, "bin/") {
+			realPath := filepath.Join(rootDir, strings.TrimPrefix(path, "bin/"))
+			log.Debug().Str("path", realPath).Msg("Writing file")
+
+			// create directory if needed
+			if err := os.MkdirAll(filepath.Dir(realPath), 0750); err != nil {
+				return err
+			}
+
+			if err := ioutil.WriteFile(realPath, content, 0750); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
-// getSourceInstallDir returns OS specific installation directory
-// for source package
+// getBinaryInstallDir returns OS specific installation directory for bin package
+func getBinaryInstallDir() (string, error) {
+	u, err := user.Current()
+	if err != nil {
+		return "", err
+	}
+
+	// TODO something else? (its enough for now)
+	return filepath.Join(u.HomeDir, ".gopkg", "bin"), nil
+}
+
+// getSourceInstallDir returns OS specific installation directory for source package
 func getSourceInstallDir() (string, error) {
 	u, err := user.Current()
 	if err != nil {
