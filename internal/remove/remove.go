@@ -29,7 +29,7 @@ func Remove(pkgName string) error {
 		if err := os.RemoveAll(file); err != nil {
 			log.Warn().Str("err", err.Error()).Str("file", file).Msg("Error while removing file")
 		}
-		log.Debug().Str("file", file).Msg("Removing file")
+		log.Trace().Str("file", file).Msg("Removing file")
 	}
 
 	c.RemovePackage(pkgName)

@@ -26,7 +26,18 @@ func Install(pkgPath string) error {
 		return err
 	}
 
-	// TODO: Make sure package not already installed
+	// Make sure package not already installed
+	// TODO: refactor this test once https://github.com/go-pkg-org/gopkg/issues/30 is managed
+	// I now it is crappy & duplicated but shouldn't stay too long ... :P
+	pkgName := filepath.Base(pkgPath)
+	pkgName, _, _, _, _, err = pkg.ParseName(pkgPath)
+	if err != nil {
+		return err
+	}
+
+	if c.GetFiles(pkgName) != nil {
+		return fmt.Errorf("package %s is already installed", pkgName)
+	}
 
 	pkgName, files, err := installFromFile(pkgPath)
 	if err != nil {
@@ -51,8 +62,6 @@ func installFromFile(pkgPath string) (string, []string, error) {
 		return "", nil, err
 	}
 
-	log.Info().Str("package", pkgName).Msg("Installing package")
-
 	pkgContent, err := pkg.Read(pkgPath)
 	if err != nil {
 		return "", nil, err
@@ -76,7 +85,7 @@ func installSourcePackage(pkgContent map[string][]byte) ([]string, error) {
 	var files []string
 	for path, content := range pkgContent {
 		filePath := filepath.Join(rootDir, path)
-		log.Debug().Str("path", filePath).Msg("Writing file")
+		log.Trace().Str("path", filePath).Msg("Writing file")
 
 		// create directory if needed
 		if err := os.MkdirAll(filepath.Dir(filePath), 0750); err != nil {
@@ -112,7 +121,7 @@ func installBinaryPackage(pkgOs, pkgArch string, pkgContent map[string][]byte) (
 	for path, content := range pkgContent {
 		if strings.HasPrefix(path, "bin/") {
 			realPath := filepath.Join(rootDir, strings.TrimPrefix(path, "bin/"))
-			log.Debug().Str("path", realPath).Msg("Writing file")
+			log.Trace().Str("path", realPath).Msg("Writing file")
 
 			// create directory if needed
 			if err := os.MkdirAll(filepath.Dir(realPath), 0750); err != nil {
