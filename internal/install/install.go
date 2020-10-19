@@ -3,11 +3,11 @@ package install
 import (
 	"fmt"
 	"github.com/go-pkg-org/gopkg/internal/cache"
+	"github.com/go-pkg-org/gopkg/internal/config"
 	"github.com/go-pkg-org/gopkg/internal/pkg"
 	"github.com/rs/zerolog/log"
 	"io/ioutil"
 	"os"
-	"os/user"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -16,7 +16,7 @@ import (
 // Install install given package
 // todo support multiple packages
 func Install(pkgPath string) error {
-	cachePath, err := getCachePath()
+	cachePath, err := config.GetCachePath()
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func installFromFile(pkgPath string) (string, []string, error) {
 }
 
 func installSourcePackage(pkgContent map[string][]byte) ([]string, error) {
-	rootDir, err := getSourceInstallDir()
+	rootDir, err := config.GetSourceInstallDir()
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func installBinaryPackage(pkgOs, pkgArch string, pkgContent map[string][]byte) (
 		return nil, fmt.Errorf("package not supported for this arch (got: %s want: %s)", pkgArch, runtime.GOARCH)
 	}
 
-	rootDir, err := getBinaryInstallDir()
+	rootDir, err := config.GetBinaryInstallDir()
 	if err != nil {
 		return nil, err
 	}
@@ -128,35 +128,4 @@ func installBinaryPackage(pkgOs, pkgArch string, pkgContent map[string][]byte) (
 	}
 
 	return files, nil
-}
-
-// getBinaryInstallDir returns OS specific installation directory for bin package
-func getBinaryInstallDir() (string, error) {
-	u, err := user.Current()
-	if err != nil {
-		return "", err
-	}
-
-	// TODO something else? (its enough for now)
-	return filepath.Join(u.HomeDir, ".gopkg", "bin"), nil
-}
-
-// getSourceInstallDir returns OS specific installation directory for source package
-func getSourceInstallDir() (string, error) {
-	u, err := user.Current()
-	if err != nil {
-		return "", err
-	}
-
-	// TODO something else? (its enough for now)
-	return filepath.Join(u.HomeDir, ".gopkg", "src"), nil
-}
-
-func getCachePath() (string, error) {
-	u, err := user.Current()
-	if err != nil {
-		return "", err
-	}
-
-	return filepath.Join(u.HomeDir, ".gopkg", "cache.json"), nil
 }

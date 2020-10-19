@@ -45,3 +45,7 @@ func (c *Cache) GetFiles(pkg string) []string {
 func (c *Cache) AddPackage(pkg string, files []string) {
 	c.Packages[pkg] = files
 }
+
+func (c *Cache) RemovePackage(pkg string) {
+	delete(c.Packages, pkg)
+}

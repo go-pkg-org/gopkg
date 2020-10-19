@@ -39,6 +39,12 @@ func main() {
 				ArgsUsage: "pkg-path",
 				Action:    cmd.ExecInstall,
 			},
+			{
+				Name:      "remove",
+				Usage:     "remove installed package",
+				ArgsUsage: "pkg-name",
+				Action:    cmd.ExecRemove,
+			},
 		},
 	}
 
