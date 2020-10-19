@@ -65,7 +65,8 @@ func buildSourcePackage(directory, releaseVersion, importPath string, p control.
 		return err
 	}
 
-	if err := pkg.Write(filepath.Join(directory, "build", pkgName), dir, true); err != nil {
+	// Save the package in `./<pkgName>`
+	if err := pkg.Write(pkgName, dir, true); err != nil {
 		return err
 	}
 
@@ -81,7 +82,8 @@ func buildBinaryPackage(directory, releaseVersion, targetOs, targetArch string, 
 
 	buildDir := filepath.Join(directory, "build", pkgName)
 
-	cmd := exec.Command("go", "build", "-v", "-o", filepath.Join(buildDir, p.Package), p.Main)
+	cmd := exec.Command("go", "build", "-o", filepath.Join(buildDir, p.Package), p.Main)
+	log.Trace().Msgf("Executing `%s`", cmd.String())
 	cmd.Dir = directory
 	cmd.Stdout = ioutil.Discard
 	cmd.Stderr = os.Stderr
@@ -90,8 +92,8 @@ func buildBinaryPackage(directory, releaseVersion, targetOs, targetArch string, 
 		return err
 	}
 
-	// Save the package in `build/packageName.pkg`
-	err = pkg.Write(filepath.Join(directory, "build", pkgName+".pkg"), []pkg.Entry{
+	// Save the package in `./<pkgName>`
+	err = pkg.Write(filepath.Join(pkgName), []pkg.Entry{
 		{
 			FilePath:    filepath.Join(buildDir, p.Package),
 			ArchivePath: filepath.Join("bin", p.Package),
@@ -107,6 +109,6 @@ func buildBinaryPackage(directory, releaseVersion, targetOs, targetArch string, 
 		return err
 	}
 
-	log.Info().Str("package", p.Package).Msg("Successfully built binary package")
+	log.Info().Str("package", pkgName).Msg("Successfully built binary package")
 	return nil
 }

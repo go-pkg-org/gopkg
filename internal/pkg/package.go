@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/go-pkg-org/gopkg/internal/control"
 	"github.com/go-pkg-org/gopkg/internal/util"
+	"github.com/rs/zerolog/log"
 	"io"
 	"io/ioutil"
 	"os"
@@ -106,6 +107,7 @@ func Write(path string, files []Entry, overwrite bool) error {
 	tw := tar.NewWriter(&buffer)
 
 	for _, file := range files {
+		log.Trace().Str("file-path", file.FilePath).Str("archive-path", file.ArchivePath).Msg("Writing file")
 		fileBody, err := ioutil.ReadFile(file.FilePath)
 		if err != nil {
 			return err
