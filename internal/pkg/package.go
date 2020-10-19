@@ -84,8 +84,8 @@ func Read(path string) (map[string][]byte, error) {
 			return nil, err
 		}
 
-		out := bytes.NewBuffer(make([]byte, header.Size))
-		if _, err := io.Copy(out, tr); err != nil {
+		out := bytes.NewBuffer([]byte{})
+		if _, err := out.ReadFrom(tr); err != nil {
 			return nil, err
 		}
 

@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
@@ -129,13 +128,13 @@ func TestRead(t *testing.T) {
 	xmlContent := string(list["test/xmlfile.xml"])
 	txtContent := string(list["txtfile.txt"])
 
-	if strings.EqualFold(jsonContent, "This is a json file") {
+	if jsonContent != "This is a json file" {
 		t.Errorf("Json file could not be read.")
 	}
-	if strings.EqualFold(xmlContent, "This is an xml file") {
+	if xmlContent != "This is an xml file" {
 		t.Errorf("Xml file could not be read.")
 	}
-	if strings.EqualFold(txtContent, "This is a txt file") {
+	if txtContent != "This is a txt file" {
 		t.Errorf("Txt file could not be read.")
 	}
 
