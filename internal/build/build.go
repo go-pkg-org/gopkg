@@ -14,17 +14,28 @@ import (
 
 // Build will build control package located as directory
 // and produce binary / dev packages into directory/build folder
-func Build(directory string) error {
-	m, c, err := control.ReadCtrlDirectory(directory)
+func Build(path string) error {
+	// If path is pointing to a .pkg file, extract it
+	if strings.HasSuffix(path, "."+pkg.FileExt) {
+		log.Debug().Str("package", path).Msg("Extracting control package")
+
+		p, err := extractControlPackage(path)
+		if err != nil {
+			return err
+		}
+		path = p
+	}
+
+	m, c, err := control.ReadCtrlDirectory(path)
 	if err != nil {
 		return err
 	}
 
 	// Recreate build directory
-	if err := os.RemoveAll(filepath.Join(directory, "build")); err != nil {
+	if err := os.RemoveAll(filepath.Join(path, "build")); err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Join(directory, "build"), 0750); err != nil {
+	if err := os.MkdirAll(filepath.Join(path, "build"), 0750); err != nil {
 		return err
 	}
 
@@ -38,13 +49,13 @@ func Build(directory string) error {
 	for _, pkg := range m.Packages {
 		var err error
 		if pkg.IsSource() {
-			if err = buildSourcePackage(directory, releaseVersion, m.ImportPath, pkg); err != nil {
+			if err = buildSourcePackage(path, releaseVersion, m.ImportPath, pkg); err != nil {
 				return err
 			}
 		} else {
 			for targetOs, targetArches := range pkg.Targets {
 				for _, targetArch := range targetArches {
-					if err = buildBinaryPackage(directory, releaseVersion, targetOs, targetArch, pkg); err != nil {
+					if err = buildBinaryPackage(path, releaseVersion, targetOs, targetArch, pkg); err != nil {
 						return err
 					}
 				}
@@ -53,7 +64,42 @@ func Build(directory string) error {
 	}
 
 	// Finally build control package
-	return buildControlPackage(directory, m.Package, releaseVersion)
+	return buildControlPackage(path, m.Package, releaseVersion)
+}
+
+func extractControlPackage(path string) (string, error) {
+	// Make sure its a control package
+	fileName := filepath.Base(path)
+	_, _, _, _, pkgType, err := pkg.ParseName(fileName)
+	if err != nil {
+		return "", err
+	}
+	if pkgType != pkg.Control {
+		return "", fmt.Errorf("%s is not a control package", fileName)
+	}
+
+	content, err := pkg.Read(path)
+	if err != nil {
+		return "", err
+	}
+
+	baseDir := filepath.Dir(path)
+	for p, b := range content {
+		targetPath := filepath.Join(baseDir, p)
+		log.Debug().Str("path", targetPath).Msg("Writing file")
+
+		// Create directory if needed
+		if err := os.MkdirAll(filepath.Dir(targetPath), 0750); err != nil {
+			return "", err
+		}
+
+		// Then creating file
+		if err := ioutil.WriteFile(targetPath, b, 0640); err != nil {
+			return "", err
+		}
+	}
+
+	return strings.TrimSuffix(path, "."+pkg.FileExt), nil
 }
 
 func buildControlPackage(directory, pkgName string, releaseVersion string) error {
@@ -64,7 +110,7 @@ func buildControlPackage(directory, pkgName string, releaseVersion string) error
 
 	// TODO: above fails because we are ignoring .gopkg folder
 	// TODO: https://github.com/go-pkg-org/gopkg/issues/23
-	dir, err := pkg.CreateEntries(directory, strings.TrimSuffix(pkgName, pkg.FileExt), []string{})
+	dir, err := pkg.CreateEntries(directory, strings.TrimSuffix(pkgName, "."+pkg.FileExt), []string{})
 	if err != nil {
 		return err
 	}

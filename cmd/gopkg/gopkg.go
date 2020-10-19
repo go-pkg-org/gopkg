@@ -29,8 +29,8 @@ func main() {
 			},
 			{
 				Name:      "build",
-				Usage:     "build a package from control directory",
-				ArgsUsage: "control-directory",
+				Usage:     "build a package from control directory/package",
+				ArgsUsage: "control-path",
 				Action:    cmd.ExecBuild,
 			},
 			{
