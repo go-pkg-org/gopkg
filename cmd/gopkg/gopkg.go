@@ -13,8 +13,9 @@ func main() {
 		Level(zerolog.DebugLevel)
 
 	app := cli.App{
-		Name:  "gopkg",
-		Usage: "Package manager for Golang written applications",
+		Name:    "gopkg",
+		Version: "0.0.1",
+		Usage:   "Package manager for Golang written applications",
 		Authors: []*cli.Author{
 			{"Aloïs Micard", "alois@micard.lu"},
 			{"Fredrik Forsmo", "hello@frozzare.com"},

@@ -24,7 +24,7 @@ func List(onlyInstalled bool) error {
 	}
 
 	if len(c.Packages) == 0 {
-		log.Info().Msg("No package installed")
+		log.Info().Msg("No packages installed")
 		return nil
 	}
 

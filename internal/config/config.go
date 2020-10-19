@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+	"os"
 	"os/user"
 	"path/filepath"
 )
@@ -35,4 +37,18 @@ func GetCachePath() (string, error) {
 	}
 
 	return filepath.Join(u.HomeDir, ".gopkg", "cache.json"), nil
+}
+
+// GetMaintainerEntry returns the maintainer entry: format Name <Email>
+func GetMaintainerEntry() string {
+	return fmt.Sprintf("%s <%s>", getEnvOr("GOPKG_MAINTAINER_NAME", "TODO"),
+		getEnvOr("GOPKG_MAINTAINER_EMAIL", "TODO"))
+}
+
+func getEnvOr(key, fallback string) string {
+	val := os.Getenv(key)
+	if val == "" {
+		return fallback
+	}
+	return val
 }

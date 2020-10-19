@@ -29,21 +29,21 @@ func Build(directory string) error {
 
 	releaseVersion := c.Releases[len(c.Releases)-1].Version
 
-	log.Info().Msgf("Control package: %s %s\n\n", m.Package, releaseVersion)
+	log.Info().Msgf("Control package: %s %s", m.Package, releaseVersion)
 
 	// TODO: when supporting dependencies we must fetch it from there
 	// and install them
 
-	for _, pkg := range m.Packages {
+	for _, p := range m.Packages {
 		var err error
-		if pkg.IsSource() {
-			if err = buildSourcePackage(directory, releaseVersion, m.ImportPath, pkg); err != nil {
+		if p.IsSource() {
+			if err = buildSourcePackage(directory, releaseVersion, m.ImportPath, p); err != nil {
 				return err
 			}
 		} else {
-			for targetOs, targetArches := range pkg.Targets {
+			for targetOs, targetArches := range p.Targets {
 				for _, targetArch := range targetArches {
-					if err = buildBinaryPackage(directory, releaseVersion, targetOs, targetArch, pkg); err != nil {
+					if err = buildBinaryPackage(directory, releaseVersion, targetOs, targetArch, p); err != nil {
 						return err
 					}
 				}

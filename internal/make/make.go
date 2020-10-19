@@ -2,6 +2,7 @@ package make
 
 import (
 	"fmt"
+	"github.com/go-pkg-org/gopkg/internal/config"
 	"github.com/go-pkg-org/gopkg/internal/control"
 	"github.com/go-pkg-org/gopkg/internal/util"
 	"github.com/rs/zerolog/log"
@@ -16,7 +17,7 @@ import (
 // Make create a brand new control package from given import path
 func Make(importPath string) error {
 	pkgName := getPackageName(importPath)
-	log.Debug().Str("package", pkgName).Msg("Package name detected")
+	log.Debug().Str("package", pkgName).Msg("Corresponding package name")
 
 	if _, err := os.Stat(pkgName); err == nil {
 		return fmt.Errorf("already existing package directory: %s", pkgName)
@@ -55,7 +56,7 @@ func Make(importPath string) error {
 
 	m := control.Metadata{
 		Package:     pkgName,
-		Maintainers: []string{getMaintainerEntry()},
+		Maintainers: []string{config.GetMaintainerEntry()},
 		Packages: []control.Package{
 			// Create initial source package
 			{Package: pkgName + "-dev", Description: "TODO"},
@@ -71,16 +72,17 @@ func Make(importPath string) error {
 	m.Packages = append(m.Packages, binPkgs...)
 
 	// Create the control directory
-	if err := control.CreateCtrlDirectory(pkgName, cleanVersion, getMaintainerEntry(), m); err != nil {
+	if err := control.CreateCtrlDirectory(pkgName, cleanVersion, config.GetMaintainerEntry(), m); err != nil {
 		return err
 	}
 
-	log.Info().Str("import-path", importPath).Msg("Detected Import-Path")
-	log.Info().Str("version", cleanVersion).Msg("Detected Version")
-	log.Info().Str("package", pkgName).Msg("Detected control package")
-	log.Info().Msg("Built packages:")
+	log.Info().
+		Str("import-path", importPath).
+		Str("version", cleanVersion).
+		Str("package", pkgName).
+		Msg("Detected values")
 	for _, pkg := range m.Packages {
-		log.Info().Str("package", pkg.Package).Msg("")
+		log.Info().Str("package", pkg.Package).Bool("source", pkg.IsSource()).Msg("Package build")
 	}
 
 	return nil
@@ -209,20 +211,6 @@ func getBinaryPackages(directory string) ([]control.Package, error) {
 	}
 
 	return pkgs, nil
-}
-
-// getMaintainerEntry returns the maintainer entry: format Name <Email>
-func getMaintainerEntry() string {
-	return fmt.Sprintf("%s <%s>", getEnvOr("GOPKG_MAINTAINER_NAME", "TODO"),
-		getEnvOr("GOPKG_MAINTAINER_EMAIL", "TODO"))
-}
-
-func getEnvOr(key, fallback string) string {
-	val := os.Getenv(key)
-	if val == "" {
-		return fallback
-	}
-	return val
 }
 
 // getUpstreamSource fetch latest available upstream source
