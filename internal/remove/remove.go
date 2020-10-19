@@ -8,6 +8,7 @@ import (
 	"os"
 )
 
+// Remove given package
 func Remove(pkgName string) error {
 	cachePath, err := config.GetCachePath()
 	if err != nil {

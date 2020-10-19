@@ -7,6 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// List packages from cache
 func List(onlyInstalled bool) error {
 	if !onlyInstalled {
 		return fmt.Errorf("not implemented at the moment")
@@ -27,7 +28,7 @@ func List(onlyInstalled bool) error {
 		return nil
 	}
 
-	for pkg, _ := range c.Packages {
+	for pkg := range c.Packages {
 		log.Info().Str("package", pkg).Msg("")
 	}
 
