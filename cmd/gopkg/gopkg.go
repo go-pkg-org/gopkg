@@ -45,6 +45,17 @@ func main() {
 				ArgsUsage: "pkg-name",
 				Action:    cmd.ExecRemove,
 			},
+			{
+				Name:  "list",
+				Usage: "list packages",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:  "installed",
+						Usage: "list only installed packages",
+					},
+				},
+				Action: cmd.ExecList,
+			},
 		},
 	}
 

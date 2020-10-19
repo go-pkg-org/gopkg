@@ -11,3 +11,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implement `gopkg make`
 - Implement `gopkg build`
 - Implement `gokpkg install`
+- Implement `gokpkg remove`
+- Implement `gokpkg list`
