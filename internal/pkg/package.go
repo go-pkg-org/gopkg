@@ -14,7 +14,20 @@ import (
 	"strings"
 )
 
-const pkgFileExt = "pkg"
+// FileExt is the extension for package files
+const FileExt = "pkg"
+
+// Type represent a package type
+type Type string
+
+const (
+	// Control are package used to build source & binary
+	Control Type = "control"
+	// Source are package providing Go source code
+	Source Type = "source"
+	// Binary are package providing executable
+	Binary Type = "binary"
+)
 
 // Entry is a tiny struct to contain data for a specific
 // entry that will be archived into a pkg file.
@@ -135,41 +148,53 @@ func Write(path string, files []Entry, overwrite bool) error {
 }
 
 // GetName return package name corresponding to given information
-func GetName(pkgName, version, os, arch string, isSrc bool) (string, error) {
+func GetName(pkgName, version, os, arch string, pkgType Type) (string, error) {
 	// validate common information
 	if pkgName == "" || version == "" {
 		return "", fmt.Errorf("missing information to build package name")
 	}
 
-	if isSrc {
-		return fmt.Sprintf("%s_%s-dev.%s", pkgName, version, pkgFileExt), nil
-	}
+	switch pkgType {
+	case Control:
+		return fmt.Sprintf("%s_%s.%s", pkgName, version, FileExt), nil
+	case Source:
+		return fmt.Sprintf("%s_%s-dev.%s", pkgName, version, FileExt), nil
+	case Binary:
+		// validate binary specific information
+		if os == "" || arch == "" {
+			return "", fmt.Errorf("missing information to build package name")
+		}
 
-	// validate binary specific information
-	if os == "" || arch == "" {
-		return "", fmt.Errorf("missing information to build package name")
+		return fmt.Sprintf("%s_%s_%s_%s.%s", pkgName, version, os, arch, FileExt), nil
+	default:
+		return "", fmt.Errorf("non managed packaged type: %s", pkgType)
 	}
-
-	return fmt.Sprintf("%s_%s_%s_%s.%s", pkgName, version, os, arch, pkgFileExt), nil
 }
 
 // ParseName parse existing package name and return found information
-func ParseName(pkg string) (string, string, string, string, bool, error) {
+func ParseName(pkg string) (string, string, string, string, Type, error) {
 	cleanPkg := strings.TrimSuffix(pkg, ".pkg")
+
+	// Easiest case: source package
 	if strings.HasSuffix(cleanPkg, "-dev") {
 		cleanPkg = strings.TrimSuffix(cleanPkg, "-dev")
 		parts := strings.Split(cleanPkg, "_")
 		if len(parts) != 2 {
-			return "", "", "", "", false, fmt.Errorf("wrong source package name")
+			return "", "", "", "", "TODO", fmt.Errorf("wrong source package name")
 		}
 
-		return parts[0], parts[1], "", "", true, nil
+		return parts[0], parts[1], "", "", Source, nil
 	}
 
 	parts := strings.Split(cleanPkg, "_")
-	if len(parts) != 4 {
-		return "", "", "", "", false, fmt.Errorf("wrong binary package name")
-	}
 
-	return parts[0], parts[1], parts[2], parts[3], false, nil
+	// control package
+	switch len(parts) {
+	case 2:
+		return parts[0], parts[1], "", "", Control, nil
+	case 4:
+		return parts[0], parts[1], parts[2], parts[3], Binary, nil
+	default:
+		return "", "", "", "", "", fmt.Errorf("malformed package name: %s", pkg)
+	}
 }

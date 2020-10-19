@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 // Build will build control package located as directory
@@ -51,11 +52,34 @@ func Build(directory string) error {
 		}
 	}
 
+	// Finally build control package
+	return buildControlPackage(directory, m.Package, releaseVersion)
+}
+
+func buildControlPackage(directory, pkgName string, releaseVersion string) error {
+	pkgName, err := pkg.GetName(pkgName, releaseVersion, "", "", pkg.Control)
+	if err != nil {
+		return err
+	}
+
+	// TODO: above fails because we are ignoring .gopkg folder
+	// TODO: https://github.com/go-pkg-org/gopkg/issues/23
+	dir, err := pkg.CreateEntries(directory, strings.TrimSuffix(pkgName, pkg.FileExt), []string{})
+	if err != nil {
+		return err
+	}
+
+	// Save the package in `./<pkgName>`
+	if err := pkg.Write(pkgName, dir, true); err != nil {
+		return err
+	}
+
+	log.Info().Str("package", pkgName).Msg("Successfully built control package")
 	return nil
 }
 
 func buildSourcePackage(directory, releaseVersion, importPath string, p control.Package) error {
-	pkgName, err := pkg.GetName(p.Package, releaseVersion, "", "", true)
+	pkgName, err := pkg.GetName(p.Package, releaseVersion, "", "", pkg.Source)
 	if err != nil {
 		return err
 	}
@@ -70,12 +94,12 @@ func buildSourcePackage(directory, releaseVersion, importPath string, p control.
 		return err
 	}
 
-	log.Info().Str("package", p.Package).Msg("Successfully built source package")
+	log.Info().Str("package", pkgName).Msg("Successfully built source package")
 	return nil
 }
 
 func buildBinaryPackage(directory, releaseVersion, targetOs, targetArch string, p control.Package) error {
-	pkgName, err := pkg.GetName(p.Package, releaseVersion, targetOs, targetArch, false)
+	pkgName, err := pkg.GetName(p.Package, releaseVersion, targetOs, targetArch, pkg.Binary)
 	if err != nil {
 		return err
 	}
