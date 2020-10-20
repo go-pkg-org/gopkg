@@ -9,21 +9,33 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 // Build will build control package located as directory
 // and produce binary / dev packages into directory/build folder
-func Build(directory string) error {
-	m, c, err := control.ReadCtrlDirectory(directory)
+func Build(path string) error {
+	// If path is pointing to a .pkg file, extract it
+	if strings.HasSuffix(path, "."+pkg.FileExt) {
+		log.Debug().Str("package", path).Msg("Extracting control package")
+
+		p, err := extractControlPackage(path)
+		if err != nil {
+			return err
+		}
+		path = p
+	}
+
+	m, c, err := control.ReadCtrlDirectory(path)
 	if err != nil {
 		return err
 	}
 
 	// Recreate build directory
-	if err := os.RemoveAll(filepath.Join(directory, "build")); err != nil {
+	if err := os.RemoveAll(filepath.Join(path, "build")); err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Join(directory, "build"), 0750); err != nil {
+	if err := os.MkdirAll(filepath.Join(path, "build"), 0750); err != nil {
 		return err
 	}
 
@@ -37,13 +49,13 @@ func Build(directory string) error {
 	for _, pkg := range m.Packages {
 		var err error
 		if pkg.IsSource() {
-			if err = buildSourcePackage(directory, releaseVersion, m.ImportPath, pkg); err != nil {
+			if err = buildSourcePackage(path, releaseVersion, m.ImportPath, pkg); err != nil {
 				return err
 			}
 		} else {
 			for targetOs, targetArches := range pkg.Targets {
 				for _, targetArch := range targetArches {
-					if err = buildBinaryPackage(directory, releaseVersion, targetOs, targetArch, pkg); err != nil {
+					if err = buildBinaryPackage(path, releaseVersion, targetOs, targetArch, pkg); err != nil {
 						return err
 					}
 				}
@@ -51,16 +63,52 @@ func Build(directory string) error {
 		}
 	}
 
-	return nil
+	// Finally build control package
+	return buildControlPackage(path, m.Package, releaseVersion)
 }
 
-func buildSourcePackage(directory, releaseVersion, importPath string, p control.Package) error {
-	pkgName, err := pkg.GetName(p.Package, releaseVersion, "", "", true)
+func extractControlPackage(path string) (string, error) {
+	// Make sure its a control package
+	fileName := filepath.Base(path)
+	_, _, _, _, pkgType, err := pkg.ParseName(fileName)
+	if err != nil {
+		return "", err
+	}
+	if pkgType != pkg.Control {
+		return "", fmt.Errorf("%s is not a control package", fileName)
+	}
+
+	content, err := pkg.Read(path)
+	if err != nil {
+		return "", err
+	}
+
+	baseDir := filepath.Dir(path)
+	for p, b := range content {
+		targetPath := filepath.Join(baseDir, p)
+		log.Debug().Str("path", targetPath).Msg("Writing file")
+
+		// Create directory if needed
+		if err := os.MkdirAll(filepath.Dir(targetPath), 0750); err != nil {
+			return "", err
+		}
+
+		// Then creating file
+		if err := ioutil.WriteFile(targetPath, b, 0640); err != nil {
+			return "", err
+		}
+	}
+
+	return strings.TrimSuffix(path, "."+pkg.FileExt), nil
+}
+
+func buildControlPackage(directory, pkgName string, releaseVersion string) error {
+	pkgName, err := pkg.GetName(pkgName, releaseVersion, "", "", pkg.Control)
 	if err != nil {
 		return err
 	}
 
-	dir, err := pkg.CreateEntries(directory, importPath, []string{})
+	dir, err := pkg.CreateEntries(directory, strings.TrimSuffix(pkgName, "."+pkg.FileExt), []string{".git"})
 	if err != nil {
 		return err
 	}
@@ -70,12 +118,32 @@ func buildSourcePackage(directory, releaseVersion, importPath string, p control.
 		return err
 	}
 
-	log.Info().Str("package", p.Package).Msg("Successfully built source package")
+	log.Info().Str("package", pkgName).Msg("Successfully built control package")
+	return nil
+}
+
+func buildSourcePackage(directory, releaseVersion, importPath string, p control.Package) error {
+	pkgName, err := pkg.GetName(p.Package, releaseVersion, "", "", pkg.Source)
+	if err != nil {
+		return err
+	}
+
+	dir, err := pkg.CreateEntries(directory, importPath, []string{".git", control.GoPkgDir})
+	if err != nil {
+		return err
+	}
+
+	// Save the package in `./<pkgName>`
+	if err := pkg.Write(pkgName, dir, true); err != nil {
+		return err
+	}
+
+	log.Info().Str("package", pkgName).Msg("Successfully built source package")
 	return nil
 }
 
 func buildBinaryPackage(directory, releaseVersion, targetOs, targetArch string, p control.Package) error {
-	pkgName, err := pkg.GetName(p.Package, releaseVersion, targetOs, targetArch, false)
+	pkgName, err := pkg.GetName(p.Package, releaseVersion, targetOs, targetArch, pkg.Binary)
 	if err != nil {
 		return err
 	}

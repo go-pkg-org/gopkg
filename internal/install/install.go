@@ -27,7 +27,7 @@ func Install(pkgPath string) error {
 // todo add support for named install
 func installFromFile(pkgPath string) (string, error) {
 	pkgName := filepath.Base(pkgPath)
-	pkgName, _, pkgOs, pkgArch, isSrc, err := pkg.ParseName(pkgName)
+	pkgName, _, pkgOs, pkgArch, pkgType, err := pkg.ParseName(pkgName)
 	if err != nil {
 		return pkgName, err
 	}
@@ -39,11 +39,14 @@ func installFromFile(pkgPath string) (string, error) {
 		return pkgName, err
 	}
 
-	if isSrc {
+	switch pkgType {
+	case pkg.Source:
 		return pkgName, installSourcePackage(pkgContent)
+	case pkg.Binary:
+		return pkgName, installBinaryPackage(pkgOs, pkgArch, pkgContent)
+	default:
+		return "", fmt.Errorf("can't install package %s", pkgName)
 	}
-
-	return pkgName, installBinaryPackage(pkgOs, pkgArch, pkgContent)
 }
 
 func installSourcePackage(pkgContent map[string][]byte) error {

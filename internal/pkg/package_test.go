@@ -44,7 +44,7 @@ func TestCreateEntries(t *testing.T) {
 		}
 	}
 
-	result, _ = CreateEntries(dir, "some/prefix", []string{".txt", ".json"})
+	result, _ = CreateEntries(dir, "some/prefix", []string{filepath.Base(xmlFile.Name())})
 	expectedPaths = []string{
 		filepath.Join(jsonFile.Name()),
 		filepath.Join(txtFile.Name()),
@@ -55,7 +55,7 @@ func TestCreateEntries(t *testing.T) {
 	}
 
 	if len(result) != len(expectedPaths) {
-		t.Error("length mismatch between expected and result")
+		t.Errorf("length mismatch between expected and result (got %d want %d)", len(result), len(expectedPaths))
 	}
 
 	for _, f := range result {
@@ -141,7 +141,16 @@ func TestRead(t *testing.T) {
 }
 
 func TestGetName(t *testing.T) {
-	name, err := GetName("github-creekorful-mvnparser", "1.0.0", "", "", true)
+	name, err := GetName("github-creekorful-mvnparser", "1.0.0", "", "", Control)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if name != "github-creekorful-mvnparser_1.0.0.pkg" {
+		t.Errorf("wrong package name (%s)", name)
+	}
+
+	name, err = GetName("github-creekorful-mvnparser", "1.0.0", "", "", Source)
 	if err != nil {
 		t.Error(err)
 	}
@@ -150,7 +159,7 @@ func TestGetName(t *testing.T) {
 		t.Errorf("wrong package name (%s)", name)
 	}
 
-	name, err = GetName("gohello", "1.0.0", "linux", "amd64", false)
+	name, err = GetName("gohello", "1.0.0", "linux", "amd64", Binary)
 	if err != nil {
 		t.Error(err)
 	}
@@ -161,7 +170,7 @@ func TestGetName(t *testing.T) {
 }
 
 func TestParseName(t *testing.T) {
-	name, ver, _, _, isSrc, err := ParseName("github-creekorful-mvnparser_1.0.0-dev.pkg")
+	name, ver, _, _, pkgType, err := ParseName("github-creekorful-mvnparser_1.0.0.pkg")
 	if err != nil {
 		t.Error(err)
 	}
@@ -174,11 +183,28 @@ func TestParseName(t *testing.T) {
 		t.Error("wrong package version")
 	}
 
-	if !isSrc {
+	if pkgType != Control {
+		t.Error("package should be control")
+	}
+
+	name, ver, _, _, pkgType, err = ParseName("github-creekorful-mvnparser_1.0.0-dev.pkg")
+	if err != nil {
+		t.Error(err)
+	}
+
+	if name != "github-creekorful-mvnparser" {
+		t.Error("wrong package name")
+	}
+
+	if ver != "1.0.0" {
+		t.Error("wrong package version")
+	}
+
+	if pkgType != Source {
 		t.Error("package should be source")
 	}
 
-	name, ver, os, arch, isSrc, err := ParseName("gohello_1.0.0_linux_amd64.pkg")
+	name, ver, o, arch, pkgType, err := ParseName("gohello_1.0.0_linux_amd64.pkg")
 	if err != nil {
 		t.Error(err)
 	}
@@ -191,7 +217,7 @@ func TestParseName(t *testing.T) {
 		t.Error("wrong package version")
 	}
 
-	if os != "linux" {
+	if o != "linux" {
 		t.Error("wrong os")
 	}
 
@@ -199,7 +225,7 @@ func TestParseName(t *testing.T) {
 		t.Error("wrong arch")
 	}
 
-	if isSrc {
+	if pkgType != Binary {
 		t.Error("package should be binary")
 	}
 }
