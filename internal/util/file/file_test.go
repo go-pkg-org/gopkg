@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -39,8 +40,10 @@ func TestFindByExtensions(t *testing.T) {
 			t.Error(err)
 		}
 
-		if err := os.Remove(path); err != nil {
-			t.Error(err)
+		if runtime.GOOS != "windows" {
+			if err := os.Remove(path); err != nil {
+				t.Error(err)
+			}
 		}
 
 		if !strings.Contains(out, file) {
