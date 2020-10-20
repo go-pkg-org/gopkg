@@ -108,9 +108,7 @@ func buildControlPackage(directory, pkgName string, releaseVersion string) error
 		return err
 	}
 
-	// TODO: above fails because we are ignoring .gopkg folder
-	// TODO: https://github.com/go-pkg-org/gopkg/issues/23
-	dir, err := pkg.CreateEntries(directory, strings.TrimSuffix(pkgName, "."+pkg.FileExt), []string{})
+	dir, err := pkg.CreateEntries(directory, strings.TrimSuffix(pkgName, "."+pkg.FileExt), []string{".git"})
 	if err != nil {
 		return err
 	}
@@ -130,7 +128,7 @@ func buildSourcePackage(directory, releaseVersion, importPath string, p control.
 		return err
 	}
 
-	dir, err := pkg.CreateEntries(directory, importPath, []string{})
+	dir, err := pkg.CreateEntries(directory, importPath, []string{".git", control.GoPkgDir})
 	if err != nil {
 		return err
 	}

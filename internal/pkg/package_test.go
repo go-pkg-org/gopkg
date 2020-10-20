@@ -44,7 +44,7 @@ func TestCreateEntries(t *testing.T) {
 		}
 	}
 
-	result, _ = CreateEntries(dir, "some/prefix", []string{".txt", ".json"})
+	result, _ = CreateEntries(dir, "some/prefix", []string{filepath.Base(xmlFile.Name())})
 	expectedPaths = []string{
 		filepath.Join(jsonFile.Name()),
 		filepath.Join(txtFile.Name()),
@@ -55,7 +55,7 @@ func TestCreateEntries(t *testing.T) {
 	}
 
 	if len(result) != len(expectedPaths) {
-		t.Error("length mismatch between expected and result")
+		t.Errorf("length mismatch between expected and result (got %d want %d)", len(result), len(expectedPaths))
 	}
 
 	for _, f := range result {
