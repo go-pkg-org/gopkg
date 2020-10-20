@@ -1,24 +1,26 @@
 package file
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"os"
-	"os/user"
 	"path/filepath"
 	"strings"
 	"testing"
 )
 
-func TestFindByExtensions(t *testing.T) {
-	u, err := user.Current()
-	if err != nil {
-		t.Error(err)
-	}
+func tempFileName(prefix, suffix string) string {
+	randBytes := make([]byte, 16)
+	rand.Read(randBytes)
+	return filepath.Join(os.TempDir(), prefix+hex.EncodeToString(randBytes)+suffix)
+}
 
+func TestFindByExtensions(t *testing.T) {
 	files := []string{
-		filepath.Join(u.HomeDir, ".gopkg.yaml"),
-		filepath.Join(u.HomeDir, ".gopkg2.yml"),
+		tempFileName(".", ".yaml"),
+		tempFileName(".", ".yml"),
 		// File without extension can't start with dot.
-		filepath.Join(u.HomeDir, "gopkg3"),
+		tempFileName("", ""),
 	}
 
 	extensions := []string{"yaml", "yml"}
