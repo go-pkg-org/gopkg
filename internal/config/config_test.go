@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/user"
@@ -32,7 +31,7 @@ func TestConfig(t *testing.T) {
 	}
 
 	if err := c.Load(); err != nil {
-		fmt.Println(err)
+		t.Error(err);
 	}
 
 	if c.BinDir != "BIN_DIR" {
