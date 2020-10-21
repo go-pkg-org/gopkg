@@ -14,7 +14,10 @@ import (
 )
 
 // FileExt is the extension for package files
-const FileExt = "pkg"
+const (
+	FileExt   = "pkg"
+	srcSuffix = "src"
+)
 
 // Type represent a package type
 type Type string
@@ -142,18 +145,19 @@ func Write(path string, files []Entry, overwrite bool) error {
 	return ioutil.WriteFile(path, buffer.Bytes(), 0644)
 }
 
-// GetName return package name corresponding to given information
-func GetName(pkgName, version, os, arch string, pkgType Type) (string, error) {
+// GetFileName return package file name corresponding to given information
+func GetFileName(name, version, os, arch string, pkgType Type) (string, error) {
 	// validate common information
-	if pkgName == "" || version == "" {
+	if name == "" || version == "" {
 		return "", fmt.Errorf("missing information to build package name")
 	}
 
+	pkgName := GetName(name)
 	switch pkgType {
 	case Control:
 		return fmt.Sprintf("%s_%s.%s", pkgName, version, FileExt), nil
 	case Source:
-		return fmt.Sprintf("%s_%s-dev.%s", pkgName, version, FileExt), nil
+		return fmt.Sprintf("%s-%s_%s.%s", pkgName, srcSuffix, version, FileExt), nil
 	case Binary:
 		// validate binary specific information
 		if os == "" || arch == "" {
@@ -166,30 +170,25 @@ func GetName(pkgName, version, os, arch string, pkgType Type) (string, error) {
 	}
 }
 
-// ParseName parse existing package name and return found information
-func ParseName(pkg string) (string, string, string, string, Type, error) {
-	cleanPkg := strings.TrimSuffix(pkg, ".pkg")
+// ParseFileName extract package information from file name
+func ParseFileName(fileName string) (string, string, string, string, Type, error) {
+	fileName = strings.TrimSuffix(fileName, "."+FileExt)
 
-	// Easiest case: source package
-	if strings.HasSuffix(cleanPkg, "-dev") {
-		cleanPkg = strings.TrimSuffix(cleanPkg, "-dev")
-		parts := strings.Split(cleanPkg, "_")
-		if len(parts) != 2 {
-			return "", "", "", "", "TODO", fmt.Errorf("wrong source package name")
-		}
-
-		return parts[0], parts[1], "", "", Source, nil
-	}
-
-	parts := strings.Split(cleanPkg, "_")
-
-	// control package
+	parts := strings.Split(fileName, "_")
 	switch len(parts) {
 	case 2:
+		if strings.HasSuffix(parts[0], "-"+srcSuffix) {
+			return parts[0], parts[1], "", "", Source, nil
+		}
 		return parts[0], parts[1], "", "", Control, nil
 	case 4:
 		return parts[0], parts[1], parts[2], parts[3], Binary, nil
 	default:
-		return "", "", "", "", "", fmt.Errorf("malformed package name: %s", pkg)
+		return "", "", "", "", "", fmt.Errorf("invalid package: %s", fileName)
 	}
+}
+
+// GetName translate from importPath to package name
+func GetName(importPath string) string {
+	return strings.ReplaceAll(importPath, "/", "-")
 }

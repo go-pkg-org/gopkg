@@ -14,36 +14,47 @@ import (
 )
 
 // Install install given package
-// todo support multiple packages
 func Install(pkgPath string) error {
 	cachePath, err := config.GetCachePath()
 	if err != nil {
 		return err
 	}
-
 	c, err := cache.Read(cachePath)
 	if err != nil {
 		return err
 	}
 
-	// Make sure package not already installed
-	// TODO: refactor this test once https://github.com/go-pkg-org/gopkg/issues/30 is managed
-	// I now it is crappy & duplicated but shouldn't stay too long ... :P
-	pkgName := filepath.Base(pkgPath)
-	pkgName, _, _, _, _, err = pkg.ParseName(pkgPath)
+	pkgName, _, pkgOs, pkgArch, pkgType, err := pkg.ParseFileName(pkgPath)
 	if err != nil {
 		return err
 	}
 
+	// read package
+	pkgContent, err := pkg.Read(pkgPath)
+	if err != nil {
+		return err
+	}
+
+	// If binary package override name using alias file
+	if pkgType == pkg.Binary {
+		if pkgContent["alias"] == nil {
+			return fmt.Errorf("no alias file found in package")
+		}
+
+		pkgName = string(pkgContent["alias"])
+	}
+
+	// Make sure package is not already installed
 	if c.GetFiles(pkgName) != nil {
 		return fmt.Errorf("package %s is already installed", pkgName)
 	}
 
-	pkgName, files, err := installFromFile(pkgPath)
+	files, err := installFromFile(pkgName, pkgOs, pkgArch, pkgType, pkgContent)
 	if err != nil {
 		return err
 	}
 
+	// Everything went well, update local cache
 	c.AddPackage(pkgName, files)
 	if err := cache.Write(cachePath, c); err != nil {
 		return err
@@ -54,28 +65,16 @@ func Install(pkgPath string) error {
 	return nil
 }
 
-// todo add support for named install
-func installFromFile(pkgPath string) (string, []string, error) {
-	pkgName := filepath.Base(pkgPath)
-	pkgName, _, pkgOs, pkgArch, pkgType, err := pkg.ParseName(pkgName)
-	if err != nil {
-		return "", nil, err
-	}
-
-	pkgContent, err := pkg.Read(pkgPath)
-	if err != nil {
-		return "", nil, err
-	}
-
+func installFromFile(pkgName, pkgOs, pkgArch string, pkgType pkg.Type, pkgContent map[string][]byte) ([]string, error) {
 	switch pkgType {
 	case pkg.Source:
 		files, err := installSourcePackage(pkgContent)
-		return pkgName, files, err
+		return files, err
 	case pkg.Binary:
 		files, err := installBinaryPackage(pkgOs, pkgArch, pkgContent)
-		return pkgName, files, err
+		return files, err
 	default:
-		return "", nil, fmt.Errorf("can't install package %s", pkgName)
+		return nil, fmt.Errorf("can't install package %s", pkgName)
 	}
 }
 

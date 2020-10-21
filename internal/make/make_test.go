@@ -10,12 +10,6 @@ import (
 	"testing"
 )
 
-func TestGetPackageName(t *testing.T) {
-	if getPackageName("github.com/creekorful/mvnparser") != "github-creekorful-mvnparser" {
-		t.FailNow()
-	}
-}
-
 func TestGetGitVersion(t *testing.T) {
 	tmpDir, err := ioutil.TempDir("", "gopkg")
 	if err != nil {
@@ -89,7 +83,6 @@ func TestGetMissingDeps(t *testing.T) {
 	}
 
 	// make sure we've found all dependencies
-	// TODO better?
 	depsToFind := map[string]bool{"github.com/muesli/termenv": false,
 		"github.com/jedib0t/go-pretty": false, "golang.org/x/crypto": false, "golang.org/x/sys": false}
 	for _, d := range missingDeps {

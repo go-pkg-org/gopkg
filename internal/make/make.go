@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/go-pkg-org/gopkg/internal/config"
 	"github.com/go-pkg-org/gopkg/internal/control"
+	"github.com/go-pkg-org/gopkg/internal/pkg"
 	"github.com/go-pkg-org/gopkg/internal/util"
 	"github.com/rs/zerolog/log"
 	"io/ioutil"
@@ -16,8 +17,7 @@ import (
 
 // Make create a brand new control package from given import path
 func Make(importPath string) error {
-	pkgName := getPackageName(importPath)
-	log.Debug().Str("package", pkgName).Msg("Corresponding package name")
+	pkgName := pkg.GetName(importPath)
 
 	if _, err := os.Stat(pkgName); err == nil {
 		return fmt.Errorf("already existing package directory: %s", pkgName)
@@ -51,21 +51,17 @@ func Make(importPath string) error {
 
 	if len(missingDeps) > 0 {
 		log.Warn().Strs("dependencies", missingDeps).Msg("Dependencies that need to be packaged first")
-		return nil // TODO error instead?
+		return nil
 	}
 
 	m := control.Metadata{
-		Package:     pkgName,
 		Maintainers: []string{config.GetMaintainerEntry()},
-		Packages: []control.Package{
-			// Create initial source package
-			{Package: pkgName + "-dev", Description: "TODO"},
-		},
-		ImportPath: importPath,
+		Packages:    []control.Package{},
+		ImportPath:  importPath,
 	}
 
 	// Search for binary packages
-	binPkgs, err := getBinaryPackages(pkgName)
+	binPkgs, err := getBinaryPackages(importPath, pkgName)
 	if err != nil {
 		return err
 	}
@@ -81,8 +77,8 @@ func Make(importPath string) error {
 		Str("version", cleanVersion).
 		Str("package", pkgName).
 		Msg("Detected values")
-	for _, pkg := range m.Packages {
-		log.Info().Str("package", pkg.Package).Bool("source", pkg.IsSource()).Msg("Package build")
+	for _, p := range m.Packages {
+		log.Info().Str("package", p.Alias).Msg("Built package")
 	}
 
 	return nil
@@ -170,14 +166,8 @@ func parseLines(b []byte) []string {
 	return strings.Split(output, "\n")
 }
 
-// Translate from importPath to package name
-// i.e github.com/creekorful/mvnparser -> github-creekorful-mvnparser
-func getPackageName(importPath string) string {
-	return strings.Replace(strings.ReplaceAll(importPath, "/", "-"), "github.com", "github", 1)
-}
-
 // getExecutables will lookup for executable in given directory and returns their corresponding package
-func getBinaryPackages(directory string) ([]control.Package, error) {
+func getBinaryPackages(importPath, directory string) ([]control.Package, error) {
 	var pkgs []control.Package
 
 	if err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
@@ -194,16 +184,17 @@ func getBinaryPackages(directory string) ([]control.Package, error) {
 			return err
 		}
 
-		// todo better lookup
 		if strings.Contains(string(b), "func main()") && strings.HasSuffix(path, ".go") {
-			pkgName := strings.Replace(info.Name(), ".go", "", 1)
+			fileName := strings.Replace(info.Name(), ".go", "", 1)
+			aliasName := filepath.Join(importPath, fileName)
 			pkgs = append(pkgs, control.Package{
-				Package:     pkgName,
+				Alias:       aliasName,
 				Description: "TODO",
 				Main:        strings.TrimPrefix(path, directory+"/"),
+				BinName:     strings.ReplaceAll(aliasName, "/", "-"),
 				Targets:     getDefaultTargets(),
 			})
-			log.Trace().Str("file", path).Str("package", pkgName).Msg("Found binary package")
+			log.Trace().Str("file", path).Str("alias", aliasName).Msg("Found binary package")
 		}
 		return nil
 	}); err != nil {
@@ -277,7 +268,6 @@ func getGitVersion(gitDir string) (string, bool, error) {
 }
 
 func getDefaultTargets() map[string][]string {
-	// TODO add more
 	return map[string][]string{
 		"linux":  {"amd64"},
 		"darwin": {"amd64"},

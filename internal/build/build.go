@@ -41,36 +41,34 @@ func Build(path string) error {
 
 	releaseVersion := c.Releases[len(c.Releases)-1].Version
 
-	log.Info().Msgf("Control package: %s %s", m.Package, releaseVersion)
+	log.Info().
+		Str("importPath", m.ImportPath).
+		Str("version", releaseVersion).
+		Msgf("Building for control package")
 
-	// TODO: when supporting dependencies we must fetch it from there
-	// and install them
+	// Build source package
+	if err := buildSourcePackage(path, m.ImportPath, releaseVersion); err != nil {
+		return err
+	}
 
 	for _, p := range m.Packages {
-		var err error
-		if p.IsSource() {
-			if err = buildSourcePackage(path, releaseVersion, m.ImportPath, p); err != nil {
-				return err
-			}
-		} else {
-			for targetOs, targetArches := range p.Targets {
-				for _, targetArch := range targetArches {
-					if err = buildBinaryPackage(path, releaseVersion, targetOs, targetArch, p); err != nil {
-						return err
-					}
+		for targetOs, targetArches := range p.Targets {
+			for _, targetArch := range targetArches {
+				if err = buildBinaryPackage(path, releaseVersion, targetOs, targetArch, p); err != nil {
+					return err
 				}
 			}
 		}
 	}
 
 	// Finally build control package
-	return buildControlPackage(path, m.Package, releaseVersion)
+	return buildControlPackage(path, m.ImportPath, releaseVersion)
 }
 
 func extractControlPackage(path string) (string, error) {
 	// Make sure its a control package
 	fileName := filepath.Base(path)
-	_, _, _, _, pkgType, err := pkg.ParseName(fileName)
+	_, _, _, _, pkgType, err := pkg.ParseFileName(fileName)
 	if err != nil {
 		return "", err
 	}
@@ -102,28 +100,28 @@ func extractControlPackage(path string) (string, error) {
 	return strings.TrimSuffix(path, "."+pkg.FileExt), nil
 }
 
-func buildControlPackage(directory, pkgName string, releaseVersion string) error {
-	pkgName, err := pkg.GetName(pkgName, releaseVersion, "", "", pkg.Control)
+func buildControlPackage(directory, importPath string, releaseVersion string) error {
+	fileName, err := pkg.GetFileName(importPath, releaseVersion, "", "", pkg.Control)
 	if err != nil {
 		return err
 	}
 
-	dir, err := pkg.CreateEntries(directory, strings.TrimSuffix(pkgName, "."+pkg.FileExt), []string{".git"})
+	dir, err := pkg.CreateEntries(directory, strings.TrimSuffix(fileName, "."+pkg.FileExt), []string{".git"})
 	if err != nil {
 		return err
 	}
 
-	// Save the package in `./<pkgName>`
-	if err := pkg.Write(pkgName, dir, true); err != nil {
+	// Save the package in `./<fileName>`
+	if err := pkg.Write(fileName, dir, true); err != nil {
 		return err
 	}
 
-	log.Info().Str("package", pkgName).Msg("Successfully built control package")
+	log.Info().Str("package", fileName).Msg("Successfully built control package")
 	return nil
 }
 
-func buildSourcePackage(directory, releaseVersion, importPath string, p control.Package) error {
-	pkgName, err := pkg.GetName(p.Package, releaseVersion, "", "", pkg.Source)
+func buildSourcePackage(directory, importPath, releaseVersion string) error {
+	fileName, err := pkg.GetFileName(importPath, releaseVersion, "", "", pkg.Source)
 	if err != nil {
 		return err
 	}
@@ -133,24 +131,24 @@ func buildSourcePackage(directory, releaseVersion, importPath string, p control.
 		return err
 	}
 
-	// Save the package in `./<pkgName>`
-	if err := pkg.Write(pkgName, dir, true); err != nil {
+	// Save the package in `./<fileName>`
+	if err := pkg.Write(fileName, dir, true); err != nil {
 		return err
 	}
 
-	log.Info().Str("package", pkgName).Msg("Successfully built source package")
+	log.Info().Str("package", fileName).Msg("Successfully built source package")
 	return nil
 }
 
 func buildBinaryPackage(directory, releaseVersion, targetOs, targetArch string, p control.Package) error {
-	pkgName, err := pkg.GetName(p.Package, releaseVersion, targetOs, targetArch, pkg.Binary)
+	pkgName, err := pkg.GetFileName(p.Alias, releaseVersion, targetOs, targetArch, pkg.Binary)
 	if err != nil {
 		return err
 	}
 
 	buildDir := filepath.Join(directory, "build", pkgName)
 
-	cmd := exec.Command("go", "build", "-o", filepath.Join(buildDir, p.Package), p.Main)
+	cmd := exec.Command("go", "build", "-o", filepath.Join(buildDir, p.BinName), p.Main)
 	log.Trace().Msgf("Executing `%s`", cmd.String())
 	cmd.Dir = directory
 	cmd.Stdout = ioutil.Discard
@@ -160,11 +158,23 @@ func buildBinaryPackage(directory, releaseVersion, targetOs, targetArch string, 
 		return err
 	}
 
+	// Create the alias file
+	// this is used later on to determinate which package we are installing
+	if err := ioutil.WriteFile(filepath.Join(buildDir, "alias"), []byte(p.Alias), 0640); err != nil {
+		return err
+	}
+
 	// Save the package in `./<pkgName>`
 	err = pkg.Write(filepath.Join(pkgName), []pkg.Entry{
+		// Add the binary
 		{
-			FilePath:    filepath.Join(buildDir, p.Package),
-			ArchivePath: filepath.Join("bin", p.Package),
+			FilePath:    filepath.Join(buildDir, p.BinName),
+			ArchivePath: filepath.Join("bin", p.BinName),
+		},
+		// Add the alias file
+		{
+			FilePath:    filepath.Join(buildDir, "alias"),
+			ArchivePath: "alias",
 		},
 	}, true)
 
