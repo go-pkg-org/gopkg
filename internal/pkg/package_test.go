@@ -140,92 +140,90 @@ func TestRead(t *testing.T) {
 
 }
 
-func TestGetName(t *testing.T) {
-	name, err := GetName("github-creekorful-mvnparser", "1.0.0", "", "", Control)
+func TestGetFileName(t *testing.T) {
+	name, err := GetFileName("github.com/creekorful/trandoshan", "1.2.0-1", "", "", Control)
 	if err != nil {
 		t.Error(err)
 	}
 
-	if name != "github-creekorful-mvnparser_1.0.0.pkg" {
-		t.Errorf("wrong package name (%s)", name)
+	if name != "github.com-creekorful-trandoshan_1.2.0-1.pkg" {
+		t.Errorf("wrong package name (got: %s want: github.com-creekorful-trandoshan_1.2.0-1.pkg)", name)
 	}
 
-	name, err = GetName("github-creekorful-mvnparser", "1.0.0", "", "", Source)
+	name, err = GetFileName("github.com/creekorful/trandoshan", "1.2.0-1", "", "", Source)
 	if err != nil {
 		t.Error(err)
 	}
 
-	if name != "github-creekorful-mvnparser_1.0.0-dev.pkg" {
-		t.Errorf("wrong package name (%s)", name)
+	if name != "github.com-creekorful-trandoshan-src_1.2.0-1.pkg" {
+		t.Errorf("wrong package name (got: %s want: github.com-creekorful-trandoshan-src.2.0-1.pkg)", name)
 	}
 
-	name, err = GetName("gohello", "1.0.0", "linux", "amd64", Binary)
+	name, err = GetFileName("trandoshan/crawler", "1.2.0-1", "linux", "amd64", Binary)
 	if err != nil {
 		t.Error(err)
 	}
 
-	if name != "gohello_1.0.0_linux_amd64.pkg" {
-		t.Error(err)
+	if name != "trandoshan-crawler_1.2.0-1_linux_amd64.pkg" {
+		t.Errorf("wrong package name (got: %s want: trandoshan-crawler_1.2.0-1_linux_amd64.pkg)", name)
 	}
 }
 
-func TestParseName(t *testing.T) {
-	name, ver, _, _, pkgType, err := ParseName("github-creekorful-mvnparser_1.0.0.pkg")
+func TestGetName(t *testing.T) {
+	if GetName("github.com/creekorful/trandoshan") != "github.com-creekorful-trandoshan" {
+		t.FailNow()
+	}
+}
+
+func TestParseFileName(t *testing.T) {
+	name, version, _, _, typ, err := ParseFileName("github.com-creekorful-trandoshan_1.2.0-1.pkg")
 	if err != nil {
 		t.Error(err)
 	}
 
-	if name != "github-creekorful-mvnparser" {
-		t.Error("wrong package name")
+	if typ != Control {
+		t.Errorf("wrong package type")
+	}
+	if name != "github.com-creekorful-trandoshan" {
+		t.Errorf("wrong package name (%s)", name)
+	}
+	if version != "1.2.0-1" {
+		t.Errorf("wrong package version (%s)", version)
 	}
 
-	if ver != "1.0.0" {
-		t.Error("wrong package version")
-	}
-
-	if pkgType != Control {
-		t.Error("package should be control")
-	}
-
-	name, ver, _, _, pkgType, err = ParseName("github-creekorful-mvnparser_1.0.0-dev.pkg")
+	name, version, _, _, typ, err = ParseFileName("github.com-creekorful-trandoshan-src_1.2.0-1.pkg")
 	if err != nil {
 		t.Error(err)
 	}
 
-	if name != "github-creekorful-mvnparser" {
-		t.Error("wrong package name")
+	if typ != Source {
+		t.Errorf("wrong package type")
+	}
+	if name != "github.com-creekorful-trandoshan-src" {
+		t.Errorf("wrong package name (%s)", name)
+	}
+	if version != "1.2.0-1" {
+		t.Errorf("wrong package version (%s)", version)
 	}
 
-	if ver != "1.0.0" {
-		t.Error("wrong package version")
-	}
-
-	if pkgType != Source {
-		t.Error("package should be source")
-	}
-
-	name, ver, o, arch, pkgType, err := ParseName("gohello_1.0.0_linux_amd64.pkg")
+	name, version, o, arch, typ, err := ParseFileName("trandoshan-crawler_1.2.0-1_linux_amd64.pkg")
 	if err != nil {
 		t.Error(err)
 	}
 
-	if name != "gohello" {
-		t.Error("wrong package name")
+	if typ != Binary {
+		t.Errorf("wrong package type")
 	}
-
-	if ver != "1.0.0" {
-		t.Error("wrong package version")
+	if name != "trandoshan-crawler" {
+		t.Errorf("wrong package name (%s)", name)
 	}
-
+	if version != "1.2.0-1" {
+		t.Errorf("wrong package version (%s)", version)
+	}
 	if o != "linux" {
-		t.Error("wrong os")
+		t.Errorf("wrong os (%s)", o)
 	}
-
 	if arch != "amd64" {
-		t.Error("wrong arch")
-	}
-
-	if pkgType != Binary {
-		t.Error("package should be binary")
+		t.Errorf("wrong arch (%s)", arch)
 	}
 }
