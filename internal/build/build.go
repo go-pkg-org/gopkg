@@ -46,6 +46,13 @@ func Build(path string) error {
 		Str("version", releaseVersion).
 		Msgf("Building for control package")
 
+	// Run unit tests
+	cmd := exec.Command("go", "test", "./...")
+	cmd.Dir = path
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
 	// Build source package
 	if err := buildSourcePackage(path, m.ImportPath, releaseVersion); err != nil {
 		return err
