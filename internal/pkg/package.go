@@ -152,12 +152,12 @@ func GetFileName(name, version, os, arch string, pkgType Type) (string, error) {
 		return "", fmt.Errorf("missing information to build package name")
 	}
 
-	pkgName := GetName(name)
+	pkgName := GetName(name, pkgType == Source)
 	switch pkgType {
 	case Control:
 		return fmt.Sprintf("%s_%s.%s", pkgName, version, FileExt), nil
 	case Source:
-		return fmt.Sprintf("%s-%s_%s.%s", pkgName, srcSuffix, version, FileExt), nil
+		return fmt.Sprintf("%s_%s.%s", pkgName, version, FileExt), nil
 	case Binary:
 		// validate binary specific information
 		if os == "" || arch == "" {
@@ -189,6 +189,11 @@ func ParseFileName(fileName string) (string, string, string, string, Type, error
 }
 
 // GetName translate from importPath to package name
-func GetName(importPath string) string {
-	return strings.ReplaceAll(importPath, "/", "-")
+func GetName(importPath string, isSrc bool) string {
+	name := strings.ReplaceAll(importPath, "/", "-")
+	if isSrc {
+		name = fmt.Sprintf("%s-%s", name, srcSuffix)
+	}
+
+	return name
 }

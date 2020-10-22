@@ -17,14 +17,14 @@ import (
 
 // Make create a brand new control package from given import path
 func Make(importPath string) error {
-	pkgName := pkg.GetName(importPath)
+	directory := pkg.GetName(importPath, false)
 
-	if _, err := os.Stat(pkgName); err == nil {
-		return fmt.Errorf("already existing package directory: %s", pkgName)
+	if _, err := os.Stat(directory); err == nil {
+		return fmt.Errorf("already existing package directory: %s", directory)
 	}
 
 	// Fetch & extract upstream source code
-	version, err := getUpstreamSource(importPath, pkgName)
+	version, err := getUpstreamSource(importPath, directory)
 	if err != nil {
 		return err
 	}
@@ -32,7 +32,7 @@ func Make(importPath string) error {
 	cleanVersion := strings.TrimPrefix(version, "v")
 
 	// Get defined importPaths (dependencies)
-	deps, err := getImportPaths(pkgName)
+	deps, err := getImportPaths(directory)
 	if err != nil {
 		return err
 	}
@@ -51,31 +51,36 @@ func Make(importPath string) error {
 
 	if len(missingDeps) > 0 {
 		log.Warn().Strs("dependencies", missingDeps).Msg("Dependencies that need to be packaged first")
-		return nil
+	}
+
+	// Convert dependencies into package name
+	var buildDepends []string
+	for _, missingDep := range missingDeps {
+		buildDepends = append(buildDepends, pkg.GetName(missingDep, true))
 	}
 
 	m := control.Metadata{
-		Maintainers: []string{config.GetMaintainerEntry()},
-		Packages:    []control.Package{},
-		ImportPath:  importPath,
+		Maintainers:       []string{config.GetMaintainerEntry()},
+		Packages:          []control.Package{},
+		ImportPath:        importPath,
+		BuildDependencies: buildDepends,
 	}
 
 	// Search for binary packages
-	binPkgs, err := getBinaryPackages(importPath, pkgName)
+	binPkgs, err := getBinaryPackages(importPath, directory)
 	if err != nil {
 		return err
 	}
 	m.Packages = append(m.Packages, binPkgs...)
 
 	// Create the control directory
-	if err := control.CreateCtrlDirectory(pkgName, cleanVersion, config.GetMaintainerEntry(), m); err != nil {
+	if err := control.CreateCtrlDirectory(directory, cleanVersion, config.GetMaintainerEntry(), m); err != nil {
 		return err
 	}
 
 	log.Info().
 		Str("import-path", importPath).
 		Str("version", cleanVersion).
-		Str("package", pkgName).
 		Msg("Detected values")
 	for _, p := range m.Packages {
 		log.Info().Str("package", p.Alias).Msg("Built package")

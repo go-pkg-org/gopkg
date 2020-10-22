@@ -29,6 +29,16 @@ func GetSourceInstallDir() (string, error) {
 	return filepath.Join(u.HomeDir, ".gopkg", "src"), nil
 }
 
+// GetGoPathDir returns GOPATH variable
+func GetGoPathDir() (string, error) {
+	path, err := GetSourceInstallDir()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(path, ".."), nil
+}
+
 // GetCachePath returns path to the installed package cache
 func GetCachePath() (string, error) {
 	u, err := user.Current()

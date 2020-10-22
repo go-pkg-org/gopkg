@@ -17,6 +17,8 @@ type Metadata struct {
 	// List of the package maintainers
 	// i.e who take the responsibility for uploading & managing it
 	Maintainers []string
+	// The package build dependencies (i.e what we need to pull before building the package)
+	BuildDependencies []string `yaml:"build_dependencies"`
 	// List of the packages built by this control package
 	Packages []Package
 }
