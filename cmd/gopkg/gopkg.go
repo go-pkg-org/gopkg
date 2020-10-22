@@ -14,7 +14,7 @@ func main() {
 
 	app := cli.App{
 		Name:    "gopkg",
-		Version: "0.0.1",
+		Version: "0.1.0",
 		Usage:   "Package manager for Golang written applications",
 		Authors: []*cli.Author{
 			{"Aloïs Micard", "alois@micard.lu"},
