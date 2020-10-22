@@ -12,32 +12,29 @@ const metadataFile = "metadata.yaml"
 
 // Metadata represent the package metadata
 type Metadata struct {
-	// Package is the control package name
-	Package string
 	// The Go import path
 	ImportPath string
 	// List of the package maintainers
 	// i.e who take the responsibility for uploading & managing it
 	Maintainers []string
+	// The package build dependencies (i.e what we need to pull before building the package)
+	BuildDependencies []string `yaml:"build_dependencies"`
 	// List of the packages built by this control package
 	Packages []Package
 }
 
 // Package represent a package installable
 type Package struct {
-	// The package name
-	Package string
+	// The package alias (i.e what the user will use to identify the package)
+	Alias string
 	// Main is the full path to the file containing the `func main()` sequence
 	Main string `yaml:"main,omitempty"`
+	// BinName is the name of the binary that will be installed
+	BinName string
 	// Human description of the package
 	Description string
 	// Targets describe the build target (os,arches)
 	Targets map[string][]string `yaml:"targets,omitempty"`
-}
-
-// IsSource returns true if the package is a source package
-func (p Package) IsSource() bool {
-	return p.Main == ""
 }
 
 // writeMetadata write the given metadata

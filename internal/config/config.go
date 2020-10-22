@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os/user"
 	"path/filepath"
@@ -9,6 +10,9 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"gopkg.in/yaml.v2"
 )
+
+// GoPkgDir is the directory where gopkg meta files are placed.
+const GoPkgDir = ".gopkg"
 
 const configFile = ".gopkg.yaml"
 
@@ -21,6 +25,7 @@ type Maintainer struct {
 // Config is the root object containg the configuration file.
 type Config struct {
 	BinDir     string     `yaml:"bin_dir" envconfig:"bin_dir"`
+	CachePath  string     `yaml:"cache_path" envconfig:"cache_path"`
 	Maintainer Maintainer `yaml:"maintainer"`
 	SrcDir     string     `yaml:"src_dir"  envconfig:"src_dir"`
 }
@@ -51,4 +56,34 @@ func (c *Config) Load() error {
 	}
 
 	return nil
+}
+
+// Default returns a default configuration.
+func Default() (*Config, error) {
+	u, err := user.Current()
+	if err != nil {
+		return nil, err
+	}
+
+	c := &Config{
+		BinDir:    filepath.Join(u.HomeDir, GoPkgDir, "bin"),
+		CachePath: filepath.Join(u.HomeDir, GoPkgDir, "cache.json"),
+		SrcDir:    filepath.Join(u.HomeDir, GoPkgDir, "src"),
+	}
+
+	if err := c.Load(); err != nil {
+		return nil, err
+	}
+
+	return c, nil
+}
+
+// GetGoPathDir returns GOPATH variable
+func (c *Config) GetGoPathDir() (string, error) {
+	return filepath.Join(c.SrcDir, ".."), nil
+}
+
+// GetMaintainerEntry returns the maintainer entry: format Name <Email>
+func (c *Config) GetMaintainerEntry() string {
+	return fmt.Sprintf("%s <%s>", c.Maintainer.Name, c.Maintainer.Email)
 }

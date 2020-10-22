@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/user"
@@ -31,7 +32,7 @@ func TestConfig(t *testing.T) {
 	}
 
 	if err := c.Load(); err != nil {
-		t.Error(err);
+		t.Error(err)
 	}
 
 	if c.BinDir != "BIN_DIR" {
@@ -48,5 +49,57 @@ func TestConfig(t *testing.T) {
 
 	if err := os.Remove(file); err != nil {
 		t.Error(err)
+	}
+
+	os.Unsetenv("GOPKG_BIN_DIR")
+}
+
+func TestConfigDefault(t *testing.T) {
+	config, err := Default()
+	if err != nil {
+		t.Error(err)
+	}
+
+	u, err := user.Current()
+	if err != nil {
+		t.Error(err)
+	}
+
+	tests := []struct {
+		Actual   string
+		Expected string
+		Text     string
+	}{
+		{
+			Actual:   config.BinDir,
+			Expected: fmt.Sprintf("%s/.gopkg/bin", u.HomeDir),
+			Text:     "Default bin dir",
+		},
+		{
+			Actual:   config.CachePath,
+			Expected: fmt.Sprintf("%s/.gopkg/cache.json", u.HomeDir),
+			Text:     "Default cache path",
+		},
+		{
+			Actual:   config.SrcDir,
+			Expected: fmt.Sprintf("%s/.gopkg/src", u.HomeDir),
+			Text:     "Default src dir",
+		},
+		{
+			Actual:   config.Maintainer.Email,
+			Expected: "",
+			Text:     "Default maintainer email",
+		},
+		{
+			Actual:   config.Maintainer.Name,
+			Expected: "",
+			Text:     "Default maintainer name",
+		},
+	}
+
+	for _, test := range tests {
+		if test.Actual != test.Expected {
+			t.Errorf("Config %s actual value [%s] is not equal to expected [%s]", test.Text, test.Actual, test.Expected)
+		}
 	}
 }

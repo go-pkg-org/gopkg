@@ -13,8 +13,9 @@ func main() {
 		Level(zerolog.DebugLevel)
 
 	app := cli.App{
-		Name:  "gopkg",
-		Usage: "Package manager for Golang written applications",
+		Name:    "gopkg",
+		Version: "0.0.1",
+		Usage:   "Package manager for Golang written applications",
 		Authors: []*cli.Author{
 			{"Aloïs Micard", "alois@micard.lu"},
 			{"Fredrik Forsmo", "hello@frozzare.com"},
@@ -29,8 +30,8 @@ func main() {
 			},
 			{
 				Name:      "build",
-				Usage:     "build a package from control directory",
-				ArgsUsage: "control-directory",
+				Usage:     "build a package from control directory/package",
+				ArgsUsage: "control-path",
 				Action:    cmd.ExecBuild,
 			},
 			{
@@ -38,6 +39,23 @@ func main() {
 				Usage:     "install a package from path",
 				ArgsUsage: "pkg-path",
 				Action:    cmd.ExecInstall,
+			},
+			{
+				Name:      "remove",
+				Usage:     "remove installed package",
+				ArgsUsage: "pkg-name",
+				Action:    cmd.ExecRemove,
+			},
+			{
+				Name:  "list",
+				Usage: "list packages",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:  "installed",
+						Usage: "list only installed packages",
+					},
+				},
+				Action: cmd.ExecList,
 			},
 		},
 	}

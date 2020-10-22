@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"bytes"
 	"fmt"
-	"github.com/go-pkg-org/gopkg/internal/control"
 	"github.com/go-pkg-org/gopkg/internal/util"
 	"github.com/rs/zerolog/log"
 	"io"
@@ -14,7 +13,23 @@ import (
 	"strings"
 )
 
-const pkgFileExt = "pkg"
+// FileExt is the extension for package files
+const (
+	FileExt   = "pkg"
+	srcSuffix = "src"
+)
+
+// Type represent a package type
+type Type string
+
+const (
+	// Control are package used to build source & binary
+	Control Type = "control"
+	// Source are package providing Go source code
+	Source Type = "source"
+	// Binary are package providing executable
+	Binary Type = "binary"
+)
 
 // Entry is a tiny struct to contain data for a specific
 // entry that will be archived into a pkg file.
@@ -25,7 +40,7 @@ type Entry struct {
 
 // CreateEntries creates a slice with all files in a specific directory that should be added to the archive.
 // The resulting value is a Entry, which maps a filepath to an archive path.
-func CreateEntries(path string, pathPrefix string, fileTypes []string) ([]Entry, error) {
+func CreateEntries(path string, pathPrefix string, excludedFiles []string) ([]Entry, error) {
 	dirContent, err := ioutil.ReadDir(path)
 	if err != nil {
 		return nil, err
@@ -34,14 +49,13 @@ func CreateEntries(path string, pathPrefix string, fileTypes []string) ([]Entry,
 	// Write file list.
 	var fileList []Entry
 	for _, file := range dirContent {
-		if file.IsDir() {
-			if file.Name() == ".git" || file.Name() == control.GoPkgDir {
-				// The above directories should _not_ be included.
-				// TODO: https://github.com/go-pkg-org/gopkg/issues/23
-				continue
-			}
+		if util.Contains(excludedFiles, file.Name()) {
+			log.Trace().Str("file", filepath.Join(path, file.Name())).Msg("Skipping file")
+			continue
+		}
 
-			tmp, err := CreateEntries(filepath.Join(path, file.Name()), pathPrefix, fileTypes)
+		if file.IsDir() {
+			tmp, err := CreateEntries(filepath.Join(path, file.Name()), "", excludedFiles)
 			if err != nil {
 				return nil, err
 			}
@@ -52,9 +66,6 @@ func CreateEntries(path string, pathPrefix string, fileTypes []string) ([]Entry,
 				})
 			}
 		} else {
-			if len(fileTypes) != 0 && !util.Contains(fileTypes, filepath.Ext(file.Name())) {
-				continue
-			}
 			fileList = append(fileList, Entry{
 				FilePath:    filepath.Join(path, file.Name()),
 				ArchivePath: filepath.Join(pathPrefix, file.Name()),
@@ -134,42 +145,55 @@ func Write(path string, files []Entry, overwrite bool) error {
 	return ioutil.WriteFile(path, buffer.Bytes(), 0644)
 }
 
-// GetName return package name corresponding to given information
-func GetName(pkgName, version, os, arch string, isSrc bool) (string, error) {
+// GetFileName return package file name corresponding to given information
+func GetFileName(name, version, os, arch string, pkgType Type) (string, error) {
 	// validate common information
-	if pkgName == "" || version == "" {
+	if name == "" || version == "" {
 		return "", fmt.Errorf("missing information to build package name")
 	}
 
-	if isSrc {
-		return fmt.Sprintf("%s_%s-dev.%s", pkgName, version, pkgFileExt), nil
-	}
-
-	// validate binary specific information
-	if os == "" || arch == "" {
-		return "", fmt.Errorf("missing information to build package name")
-	}
-
-	return fmt.Sprintf("%s_%s_%s_%s.%s", pkgName, version, os, arch, pkgFileExt), nil
-}
-
-// ParseName parse existing package name and return found information
-func ParseName(pkg string) (string, string, string, string, bool, error) {
-	cleanPkg := strings.TrimSuffix(pkg, ".pkg")
-	if strings.HasSuffix(cleanPkg, "-dev") {
-		cleanPkg = strings.TrimSuffix(cleanPkg, "-dev")
-		parts := strings.Split(cleanPkg, "_")
-		if len(parts) != 2 {
-			return "", "", "", "", false, fmt.Errorf("wrong source package name")
+	pkgName := GetName(name, pkgType == Source)
+	switch pkgType {
+	case Control:
+		return fmt.Sprintf("%s_%s.%s", pkgName, version, FileExt), nil
+	case Source:
+		return fmt.Sprintf("%s_%s.%s", pkgName, version, FileExt), nil
+	case Binary:
+		// validate binary specific information
+		if os == "" || arch == "" {
+			return "", fmt.Errorf("missing information to build package name")
 		}
 
-		return parts[0], parts[1], "", "", true, nil
+		return fmt.Sprintf("%s_%s_%s_%s.%s", pkgName, version, os, arch, FileExt), nil
+	default:
+		return "", fmt.Errorf("non managed packaged type: %s", pkgType)
+	}
+}
+
+// ParseFileName extract package information from file name
+func ParseFileName(fileName string) (string, string, string, string, Type, error) {
+	fileName = strings.TrimSuffix(fileName, "."+FileExt)
+
+	parts := strings.Split(fileName, "_")
+	switch len(parts) {
+	case 2:
+		if strings.HasSuffix(parts[0], "-"+srcSuffix) {
+			return parts[0], parts[1], "", "", Source, nil
+		}
+		return parts[0], parts[1], "", "", Control, nil
+	case 4:
+		return parts[0], parts[1], parts[2], parts[3], Binary, nil
+	default:
+		return "", "", "", "", "", fmt.Errorf("invalid package: %s", fileName)
+	}
+}
+
+// GetName translate from importPath to package name
+func GetName(importPath string, isSrc bool) string {
+	name := strings.ReplaceAll(importPath, "/", "-")
+	if isSrc {
+		name = fmt.Sprintf("%s-%s", name, srcSuffix)
 	}
 
-	parts := strings.Split(cleanPkg, "_")
-	if len(parts) != 4 {
-		return "", "", "", "", false, fmt.Errorf("wrong binary package name")
-	}
-
-	return parts[0], parts[1], parts[2], parts[3], false, nil
+	return name
 }

@@ -44,7 +44,7 @@ func TestCreateEntries(t *testing.T) {
 		}
 	}
 
-	result, _ = CreateEntries(dir, "some/prefix", []string{".txt", ".json"})
+	result, _ = CreateEntries(dir, "some/prefix", []string{filepath.Base(xmlFile.Name())})
 	expectedPaths = []string{
 		filepath.Join(jsonFile.Name()),
 		filepath.Join(txtFile.Name()),
@@ -55,7 +55,7 @@ func TestCreateEntries(t *testing.T) {
 	}
 
 	if len(result) != len(expectedPaths) {
-		t.Error("length mismatch between expected and result")
+		t.Errorf("length mismatch between expected and result (got %d want %d)", len(result), len(expectedPaths))
 	}
 
 	for _, f := range result {
@@ -140,66 +140,94 @@ func TestRead(t *testing.T) {
 
 }
 
-func TestGetName(t *testing.T) {
-	name, err := GetName("github-creekorful-mvnparser", "1.0.0", "", "", true)
+func TestGetFileName(t *testing.T) {
+	name, err := GetFileName("github.com/creekorful/trandoshan", "1.2.0-1", "", "", Control)
 	if err != nil {
 		t.Error(err)
 	}
 
-	if name != "github-creekorful-mvnparser_1.0.0-dev.pkg" {
-		t.Errorf("wrong package name (%s)", name)
+	if name != "github.com-creekorful-trandoshan_1.2.0-1.pkg" {
+		t.Errorf("wrong package name (got: %s want: github.com-creekorful-trandoshan_1.2.0-1.pkg)", name)
 	}
 
-	name, err = GetName("gohello", "1.0.0", "linux", "amd64", false)
+	name, err = GetFileName("github.com/creekorful/trandoshan", "1.2.0-1", "", "", Source)
 	if err != nil {
 		t.Error(err)
 	}
 
-	if name != "gohello_1.0.0_linux_amd64.pkg" {
+	if name != "github.com-creekorful-trandoshan-src_1.2.0-1.pkg" {
+		t.Errorf("wrong package name (got: %s want: github.com-creekorful-trandoshan-src.2.0-1.pkg)", name)
+	}
+
+	name, err = GetFileName("trandoshan/crawler", "1.2.0-1", "linux", "amd64", Binary)
+	if err != nil {
 		t.Error(err)
+	}
+
+	if name != "trandoshan-crawler_1.2.0-1_linux_amd64.pkg" {
+		t.Errorf("wrong package name (got: %s want: trandoshan-crawler_1.2.0-1_linux_amd64.pkg)", name)
 	}
 }
 
-func TestParseName(t *testing.T) {
-	name, ver, _, _, isSrc, err := ParseName("github-creekorful-mvnparser_1.0.0-dev.pkg")
+func TestGetName(t *testing.T) {
+	if GetName("github.com/creekorful/trandoshan", false) != "github.com-creekorful-trandoshan" {
+		t.FailNow()
+	}
+
+	if GetName("github.com/creekorful/trandoshan", true) != "github.com-creekorful-trandoshan-src" {
+		t.FailNow()
+	}
+}
+
+func TestParseFileName(t *testing.T) {
+	name, version, _, _, typ, err := ParseFileName("github.com-creekorful-trandoshan_1.2.0-1.pkg")
 	if err != nil {
 		t.Error(err)
 	}
 
-	if name != "github-creekorful-mvnparser" {
-		t.Error("wrong package name")
+	if typ != Control {
+		t.Errorf("wrong package type")
+	}
+	if name != "github.com-creekorful-trandoshan" {
+		t.Errorf("wrong package name (%s)", name)
+	}
+	if version != "1.2.0-1" {
+		t.Errorf("wrong package version (%s)", version)
 	}
 
-	if ver != "1.0.0" {
-		t.Error("wrong package version")
-	}
-
-	if !isSrc {
-		t.Error("package should be source")
-	}
-
-	name, ver, os, arch, isSrc, err := ParseName("gohello_1.0.0_linux_amd64.pkg")
+	name, version, _, _, typ, err = ParseFileName("github.com-creekorful-trandoshan-src_1.2.0-1.pkg")
 	if err != nil {
 		t.Error(err)
 	}
 
-	if name != "gohello" {
-		t.Error("wrong package name")
+	if typ != Source {
+		t.Errorf("wrong package type")
+	}
+	if name != "github.com-creekorful-trandoshan-src" {
+		t.Errorf("wrong package name (%s)", name)
+	}
+	if version != "1.2.0-1" {
+		t.Errorf("wrong package version (%s)", version)
 	}
 
-	if ver != "1.0.0" {
-		t.Error("wrong package version")
+	name, version, o, arch, typ, err := ParseFileName("trandoshan-crawler_1.2.0-1_linux_amd64.pkg")
+	if err != nil {
+		t.Error(err)
 	}
 
-	if os != "linux" {
-		t.Error("wrong os")
+	if typ != Binary {
+		t.Errorf("wrong package type")
 	}
-
+	if name != "trandoshan-crawler" {
+		t.Errorf("wrong package name (%s)", name)
+	}
+	if version != "1.2.0-1" {
+		t.Errorf("wrong package version (%s)", version)
+	}
+	if o != "linux" {
+		t.Errorf("wrong os (%s)", o)
+	}
 	if arch != "amd64" {
-		t.Error("wrong arch")
-	}
-
-	if isSrc {
-		t.Error("package should be binary")
+		t.Errorf("wrong arch (%s)", arch)
 	}
 }
