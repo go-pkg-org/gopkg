@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/user"
@@ -72,17 +71,17 @@ func TestConfigDefault(t *testing.T) {
 	}{
 		{
 			Actual:   config.BinDir,
-			Expected: fmt.Sprintf("%s/.gopkg/bin", u.HomeDir),
+			Expected: filepath.Join(u.HomeDir, GoPkgDir, "bin"),
 			Text:     "Default bin dir",
 		},
 		{
 			Actual:   config.CachePath,
-			Expected: fmt.Sprintf("%s/.gopkg/cache.json", u.HomeDir),
+			Expected: filepath.Join(u.HomeDir, GoPkgDir, "cache.json"),
 			Text:     "Default cache path",
 		},
 		{
 			Actual:   config.SrcDir,
-			Expected: fmt.Sprintf("%s/.gopkg/src", u.HomeDir),
+			Expected: filepath.Join(u.HomeDir, GoPkgDir, "src"),
 			Text:     "Default src dir",
 		},
 		{
