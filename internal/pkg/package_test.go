@@ -2,11 +2,17 @@ package pkg
 
 import (
 	util "github.com/go-pkg-org/gopkg/internal/util"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 )
+
+func init() {
+	log.Logger = log.Level(zerolog.Disabled)
+}
 
 func TestCreateEntries(t *testing.T) {
 	dir, _ := ioutil.TempDir("", "gopkg_*")
@@ -119,10 +125,11 @@ func TestRead(t *testing.T) {
 		t.Errorf("failed to create archive: %s", err)
 	}
 
-	list, err := Read(filepath.Join(dir, "out.pkg"))
+	p, err := ReadFile(filepath.Join(dir, "out.pkg"))
 	if err != nil {
 		t.Errorf("failed to read the archive: %s", err)
 	}
+	list := p.Files()
 
 	jsonContent := string(list["jsonfile.json"])
 	xmlContent := string(list["test/xmlfile.xml"])

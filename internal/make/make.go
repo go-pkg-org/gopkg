@@ -3,7 +3,6 @@ package make
 import (
 	"fmt"
 	"github.com/go-pkg-org/gopkg/internal/config"
-	"github.com/go-pkg-org/gopkg/internal/control"
 	"github.com/go-pkg-org/gopkg/internal/pkg"
 	"github.com/go-pkg-org/gopkg/internal/util"
 	"github.com/rs/zerolog/log"
@@ -59,9 +58,9 @@ func Make(importPath string) error {
 		buildDepends = append(buildDepends, pkg.GetName(missingDep, true))
 	}
 
-	m := control.Metadata{
+	m := pkg.ControlMeta{
 		Maintainers:       []string{config.GetMaintainerEntry()},
-		Packages:          []control.Package{},
+		Packages:          []pkg.Meta{},
 		ImportPath:        importPath,
 		BuildDependencies: buildDepends,
 	}
@@ -74,7 +73,7 @@ func Make(importPath string) error {
 	m.Packages = append(m.Packages, binPkgs...)
 
 	// Create the control directory
-	if err := control.CreateCtrlDirectory(directory, cleanVersion, config.GetMaintainerEntry(), m); err != nil {
+	if err := pkg.CreateCtrlDirectory(directory, cleanVersion, config.GetMaintainerEntry(), m); err != nil {
 		return err
 	}
 
@@ -172,8 +171,8 @@ func parseLines(b []byte) []string {
 }
 
 // getExecutables will lookup for executable in given directory and returns their corresponding package
-func getBinaryPackages(importPath, directory string) ([]control.Package, error) {
-	var pkgs []control.Package
+func getBinaryPackages(importPath, directory string) ([]pkg.Meta, error) {
+	var pkgs []pkg.Meta
 
 	if err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -192,7 +191,7 @@ func getBinaryPackages(importPath, directory string) ([]control.Package, error) 
 		if strings.Contains(string(b), "func main()") && strings.HasSuffix(path, ".go") {
 			fileName := strings.Replace(info.Name(), ".go", "", 1)
 			aliasName := filepath.Join(importPath, fileName)
-			pkgs = append(pkgs, control.Package{
+			pkgs = append(pkgs, pkg.Meta{
 				Alias:       aliasName,
 				Description: "TODO",
 				Main:        strings.TrimPrefix(path, directory+"/"),

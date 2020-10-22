@@ -55,6 +55,11 @@ func GetMaintainerEntry() string {
 		getEnvOr("GOPKG_MAINTAINER_EMAIL", "TODO"))
 }
 
+// GetSigningKey returns the GPG fingerprint of the signing key to use
+func GetSigningKey() string {
+	return getEnvOr("GOPKG_SIGNING_KEY", "TODO")
+}
+
 func getEnvOr(key, fallback string) string {
 	val := os.Getenv(key)
 	if val == "" {

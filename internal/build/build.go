@@ -3,9 +3,9 @@ package build
 import (
 	"fmt"
 	"github.com/go-pkg-org/gopkg/internal/config"
-	"github.com/go-pkg-org/gopkg/internal/control"
 	"github.com/go-pkg-org/gopkg/internal/pkg"
 	"github.com/rs/zerolog/log"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -27,7 +27,7 @@ func Build(path string) error {
 		path = p
 	}
 
-	m, c, err := control.ReadCtrlDirectory(path)
+	m, c, err := pkg.ReadCtrlDirectory(path)
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,11 @@ func Build(path string) error {
 	}
 
 	// Get latest release
-	releaseVersion := c.Releases[len(c.Releases)-1].Version
+	latestRelease, err := c.LastRelease()
+	if err != nil {
+		return err
+	}
+	releaseVersion := latestRelease.Version
 
 	log.Info().
 		Str("importPath", m.ImportPath).
@@ -84,6 +88,7 @@ func Build(path string) error {
 func extractControlPackage(path string) (string, error) {
 	// Make sure its a control package
 	fileName := filepath.Base(path)
+	// TODO refactor this last usage of ParseFileName
 	_, _, _, _, pkgType, err := pkg.ParseFileName(fileName)
 	if err != nil {
 		return "", err
@@ -92,13 +97,13 @@ func extractControlPackage(path string) (string, error) {
 		return "", fmt.Errorf("%s is not a control package", fileName)
 	}
 
-	content, err := pkg.Read(path)
+	f, err := pkg.ReadFile(path)
 	if err != nil {
 		return "", err
 	}
 
 	baseDir := filepath.Dir(path)
-	for p, b := range content {
+	for p, b := range f.Files() {
 		targetPath := filepath.Join(baseDir, p)
 		log.Debug().Str("path", targetPath).Msg("Writing file")
 
@@ -142,10 +147,28 @@ func buildSourcePackage(directory, importPath, releaseVersion string) error {
 		return err
 	}
 
-	dir, err := pkg.CreateEntries(directory, importPath, []string{".git", control.GoPkgDir})
+	dir, err := pkg.CreateEntries(directory, importPath, []string{".git", pkg.GoPkgDir})
 	if err != nil {
 		return err
 	}
+
+	// Create package definition
+	p := pkg.Meta{
+		Alias:          importPath,
+		ReleaseVersion: releaseVersion,
+	}
+	b, err := yaml.Marshal(p)
+	if err != nil {
+		return err
+	}
+	// TODO improve that
+	if err := ioutil.WriteFile(filepath.Join(directory, "package.yaml"), b, 0640); err != nil {
+		return err
+	}
+	dir = append(dir, pkg.Entry{
+		FilePath:    filepath.Join(directory, "package.yaml"),
+		ArchivePath: "package.yaml",
+	})
 
 	// Save the package in `./<fileName>`
 	if err := pkg.Write(fileName, dir, true); err != nil {
@@ -156,7 +179,7 @@ func buildSourcePackage(directory, importPath, releaseVersion string) error {
 	return nil
 }
 
-func buildBinaryPackage(goPath, directory, releaseVersion, targetOs, targetArch string, p control.Package) error {
+func buildBinaryPackage(goPath, directory, releaseVersion, targetOs, targetArch string, p pkg.Meta) error {
 	pkgName, err := pkg.GetFileName(p.Alias, releaseVersion, targetOs, targetArch, pkg.Binary)
 	if err != nil {
 		return err
@@ -175,9 +198,18 @@ func buildBinaryPackage(goPath, directory, releaseVersion, targetOs, targetArch 
 		return err
 	}
 
-	// Create the alias file
-	// this is used later on to determinate which package we are installing
-	if err := ioutil.WriteFile(filepath.Join(buildDir, "alias"), []byte(p.Alias), 0640); err != nil {
+	// Copy package definition
+	// this is used later on to determinate which package we are installing & populate info
+	p.Targets = nil
+	p.TargetOS = targetOs
+	p.TargetArch = targetArch
+	p.ReleaseVersion = releaseVersion
+	b, err := yaml.Marshal(p)
+	if err != nil {
+		return err
+	}
+
+	if err := ioutil.WriteFile(filepath.Join(buildDir, "package.yaml"), b, 0640); err != nil {
 		return err
 	}
 
@@ -190,8 +222,8 @@ func buildBinaryPackage(goPath, directory, releaseVersion, targetOs, targetArch 
 		},
 		// Add the alias file
 		{
-			FilePath:    filepath.Join(buildDir, "alias"),
-			ArchivePath: "alias",
+			FilePath:    filepath.Join(buildDir, "package.yaml"),
+			ArchivePath: "package.yaml",
 		},
 	}, true)
 
