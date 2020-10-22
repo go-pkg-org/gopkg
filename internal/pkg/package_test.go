@@ -170,7 +170,11 @@ func TestGetFileName(t *testing.T) {
 }
 
 func TestGetName(t *testing.T) {
-	if GetName("github.com/creekorful/trandoshan") != "github.com-creekorful-trandoshan" {
+	if GetName("github.com/creekorful/trandoshan", false) != "github.com-creekorful-trandoshan" {
+		t.FailNow()
+	}
+
+	if GetName("github.com/creekorful/trandoshan", true) != "github.com-creekorful-trandoshan-src" {
 		t.FailNow()
 	}
 }

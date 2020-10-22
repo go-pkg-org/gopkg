@@ -2,6 +2,7 @@ package build
 
 import (
 	"fmt"
+	"github.com/go-pkg-org/gopkg/internal/config"
 	"github.com/go-pkg-org/gopkg/internal/control"
 	"github.com/go-pkg-org/gopkg/internal/pkg"
 	"github.com/rs/zerolog/log"
@@ -39,6 +40,12 @@ func Build(path string) error {
 		return err
 	}
 
+	goPath, err := config.GetGoPathDir()
+	if err != nil {
+		return err
+	}
+
+	// Get latest release
 	releaseVersion := c.Releases[len(c.Releases)-1].Version
 
 	log.Info().
@@ -48,6 +55,8 @@ func Build(path string) error {
 
 	// Run unit tests
 	cmd := exec.Command("go", "test", "./...")
+	cmd.Env = append(os.Environ(), fmt.Sprintf("GOPATH=%s", goPath))
+	cmd.Stderr = os.Stderr
 	cmd.Dir = path
 	if err := cmd.Run(); err != nil {
 		return err
@@ -61,7 +70,7 @@ func Build(path string) error {
 	for _, p := range m.Packages {
 		for targetOs, targetArches := range p.Targets {
 			for _, targetArch := range targetArches {
-				if err = buildBinaryPackage(path, releaseVersion, targetOs, targetArch, p); err != nil {
+				if err = buildBinaryPackage(goPath, path, releaseVersion, targetOs, targetArch, p); err != nil {
 					return err
 				}
 			}
@@ -147,7 +156,7 @@ func buildSourcePackage(directory, importPath, releaseVersion string) error {
 	return nil
 }
 
-func buildBinaryPackage(directory, releaseVersion, targetOs, targetArch string, p control.Package) error {
+func buildBinaryPackage(goPath, directory, releaseVersion, targetOs, targetArch string, p control.Package) error {
 	pkgName, err := pkg.GetFileName(p.Alias, releaseVersion, targetOs, targetArch, pkg.Binary)
 	if err != nil {
 		return err
@@ -160,7 +169,8 @@ func buildBinaryPackage(directory, releaseVersion, targetOs, targetArch string, 
 	cmd.Dir = directory
 	cmd.Stdout = ioutil.Discard
 	cmd.Stderr = os.Stderr
-	cmd.Env = append(os.Environ(), fmt.Sprintf("GOOS=%s", targetOs), fmt.Sprintf("GOARCH=%s", targetArch))
+	cmd.Env = append(os.Environ(), fmt.Sprintf("GOOS=%s", targetOs),
+		fmt.Sprintf("GOARCH=%s", targetArch), fmt.Sprintf("GOPATH=%s", goPath))
 	if err := cmd.Run(); err != nil {
 		return err
 	}
