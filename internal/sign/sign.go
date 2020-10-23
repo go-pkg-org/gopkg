@@ -9,7 +9,12 @@ import (
 
 // Sign sign given package
 func Sign(pkgPath string) error {
-	key := config.GetSigningKey()
+	conf, err := config.Default()
+	if err != nil {
+		return err
+	}
+
+	key := conf.Maintainer.SigningKey
 	if key == "TODO" {
 		return fmt.Errorf("please configure a signing key trough GOPKG_SIGNING_KEY env variable")
 	}

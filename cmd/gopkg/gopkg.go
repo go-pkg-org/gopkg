@@ -205,15 +205,15 @@ func getAbsolutePath(path string) (string, error) {
 }
 
 func getCache() (cache.Cache, error) {
-	arcClient, err := archive.NewClient(archive.DefaultURL)
+	conf, err := config.Default()
 	if err != nil {
 		return nil, err
 	}
 
-	cachePath, err := config.GetCachePath()
+	arcClient, err := archive.NewClient(conf.ArchiveURL)
 	if err != nil {
 		return nil, err
 	}
 
-	return cache.NewCache(cachePath, arcClient)
+	return cache.NewCache(conf.CachePath, arcClient, conf)
 }

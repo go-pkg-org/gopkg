@@ -32,7 +32,7 @@ type cache struct {
 	Packages  map[string][]string `json:"packages"`
 	arcClient archive.Client
 	cacheFile string
-	// TODO store config here
+	conf      *config.Config
 }
 
 func (c *cache) InstallPkgFile(filePath string) (pkg.Meta, error) {
@@ -74,7 +74,7 @@ func (c *cache) installPkg(pkgFile pkg.File) (pkg.Meta, error) {
 	var files []string
 	// source package can be installed no matter what
 	if meta.Source() {
-		files, err = installSourcePkg(pkgFile)
+		files, err = installSourcePkg(pkgFile, c.conf.SrcDir)
 		if err != nil {
 			return pkg.Meta{}, err
 		}
@@ -84,7 +84,7 @@ func (c *cache) installPkg(pkgFile pkg.File) (pkg.Meta, error) {
 			return pkg.Meta{}, ErrWrongTarget
 		}
 
-		files, err = installBinaryPkg(pkgFile)
+		files, err = installBinaryPkg(pkgFile, c.conf.BinDir)
 		if err != nil {
 			return pkg.Meta{}, err
 		}
@@ -99,12 +99,7 @@ func (c *cache) installPkg(pkgFile pkg.File) (pkg.Meta, error) {
 	return meta, err
 }
 
-func installSourcePkg(pkgFile pkg.File) ([]string, error) {
-	rootDir, err := config.GetSourceInstallDir()
-	if err != nil {
-		return nil, err
-	}
-
+func installSourcePkg(pkgFile pkg.File, sourceInstallDir string) ([]string, error) {
 	var files []string
 	for path, content := range pkgFile.Files() {
 		// Do not install package.yaml file
@@ -112,7 +107,7 @@ func installSourcePkg(pkgFile pkg.File) ([]string, error) {
 			continue
 		}
 
-		filePath := filepath.Join(rootDir, path)
+		filePath := filepath.Join(sourceInstallDir, path)
 		log.Trace().Str("path", filePath).Msg("Writing file")
 
 		// create directory if needed
@@ -131,12 +126,7 @@ func installSourcePkg(pkgFile pkg.File) ([]string, error) {
 	return files, nil
 }
 
-func installBinaryPkg(pkgFile pkg.File) ([]string, error) {
-	rootDir, err := config.GetBinaryInstallDir()
-	if err != nil {
-		return nil, err
-	}
-
+func installBinaryPkg(pkgFile pkg.File, binaryInstallDir string) ([]string, error) {
 	var files []string
 	for path, content := range pkgFile.Files() {
 		// Do not install package.yaml file
@@ -145,7 +135,7 @@ func installBinaryPkg(pkgFile pkg.File) ([]string, error) {
 		}
 
 		if strings.HasPrefix(path, "bin/") {
-			realPath := filepath.Join(rootDir, strings.TrimPrefix(path, "bin/"))
+			realPath := filepath.Join(binaryInstallDir, strings.TrimPrefix(path, "bin/"))
 			log.Trace().Str("path", realPath).Msg("Writing file")
 
 			// create directory if needed
@@ -204,7 +194,7 @@ func (c *cache) RemovePkg(alias string) error {
 }
 
 // NewCache create a brand new cache using given arguments
-func NewCache(cacheFile string, arcClient archive.Client) (Cache, error) {
+func NewCache(cacheFile string, arcClient archive.Client, conf *config.Config) (Cache, error) {
 	c, err := read(cacheFile)
 	if err != nil {
 		return nil, err
@@ -212,6 +202,7 @@ func NewCache(cacheFile string, arcClient archive.Client) (Cache, error) {
 
 	c.arcClient = arcClient
 	c.cacheFile = cacheFile
+	c.conf = conf
 
 	return c, nil
 }

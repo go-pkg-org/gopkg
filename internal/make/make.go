@@ -22,6 +22,11 @@ func Make(importPath string) error {
 		return fmt.Errorf("already existing package directory: %s", directory)
 	}
 
+	conf, err := config.Default()
+	if err != nil {
+		return err
+	}
+
 	// Fetch & extract upstream source code
 	version, err := getUpstreamSource(importPath, directory)
 	if err != nil {
@@ -59,7 +64,7 @@ func Make(importPath string) error {
 	}
 
 	m := pkg.ControlMeta{
-		Maintainers:       []string{config.GetMaintainerEntry()},
+		Maintainers:       []string{conf.GetMaintainerEntry()},
 		Packages:          []pkg.Meta{},
 		ImportPath:        importPath,
 		BuildDependencies: buildDepends,
@@ -73,7 +78,7 @@ func Make(importPath string) error {
 	m.Packages = append(m.Packages, binPkgs...)
 
 	// Create the control directory
-	if err := pkg.CreateCtrlDirectory(directory, cleanVersion, config.GetMaintainerEntry(), m); err != nil {
+	if err := pkg.CreateCtrlDirectory(directory, cleanVersion, conf.GetMaintainerEntry(), m); err != nil {
 		return err
 	}
 

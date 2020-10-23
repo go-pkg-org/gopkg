@@ -32,6 +32,11 @@ func Build(path string) error {
 		return err
 	}
 
+	conf, err := config.Default()
+	if err != nil {
+		return err
+	}
+
 	// Recreate build directory
 	if err := os.RemoveAll(filepath.Join(path, "build")); err != nil {
 		return err
@@ -40,7 +45,7 @@ func Build(path string) error {
 		return err
 	}
 
-	goPath, err := config.GetGoPathDir()
+	goPath, err := conf.GetGoPathDir()
 	if err != nil {
 		return err
 	}
