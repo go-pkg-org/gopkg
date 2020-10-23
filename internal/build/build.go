@@ -2,15 +2,16 @@ package build
 
 import (
 	"fmt"
-	"github.com/go-pkg-org/gopkg/internal/config"
-	"github.com/go-pkg-org/gopkg/internal/control"
-	"github.com/go-pkg-org/gopkg/internal/pkg"
-	"github.com/rs/zerolog/log"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/go-pkg-org/gopkg/internal/config"
+	"github.com/go-pkg-org/gopkg/internal/control"
+	"github.com/go-pkg-org/gopkg/internal/pkg"
+	"github.com/rs/zerolog/log"
 )
 
 // Build will build control package located as directory
@@ -56,9 +57,16 @@ func Build(path string) error {
 	// Run unit tests
 	cmd := exec.Command("go", "test", "./...")
 	cmd.Env = append(os.Environ(), fmt.Sprintf("GOPATH=%s", goPath))
-	cmd.Stderr = os.Stderr
 	cmd.Dir = path
-	if err := cmd.Run(); err != nil {
+	output, err := cmd.Output()
+	if len(output) == 0 {
+		log.Error().Msg("No go packages found")
+		return nil
+	}
+
+	fmt.Println(string(output))
+
+	if err != nil {
 		return err
 	}
 
