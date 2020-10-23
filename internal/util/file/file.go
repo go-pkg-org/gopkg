@@ -8,7 +8,8 @@ import (
 )
 
 var (
-	errNoFileFound = errors.New("No file found")
+	// ErrNoFileFound is the error when no file is found.
+	ErrNoFileFound = errors.New("No file found")
 )
 
 // FindByExtensions will search for file by provided extensions.
@@ -25,5 +26,5 @@ func FindByExtensions(file string, extensions []string) (string, error) {
 		}
 	}
 
-	return "", errNoFileFound
+	return "", ErrNoFileFound
 }
