@@ -3,6 +3,7 @@ package cache
 import (
 	"github.com/go-pkg-org/gopkg/internal/archive"
 	"github.com/go-pkg-org/gopkg/internal/archive_mock"
+	"github.com/go-pkg-org/gopkg/internal/config"
 	"github.com/go-pkg-org/gopkg/internal/pkg"
 	"github.com/go-pkg-org/gopkg/internal/pkg_mock"
 	"github.com/golang/mock/gomock"
@@ -51,6 +52,7 @@ func TestCache_InstallPkg(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	binDir, _ := ioutil.TempDir("", "")
 	f, _ := ioutil.TempFile("", "")
 
 	p := pkg_mock.NewMockFile(ctrl)
@@ -66,6 +68,9 @@ func TestCache_InstallPkg(t *testing.T) {
 	cache := cache{
 		Packages:  map[string][]string{},
 		cacheFile: f.Name(),
+		conf: &config.Config{
+			BinDir: binDir,
+		},
 	}
 
 	if _, err := cache.installPkg(p); err != nil {
