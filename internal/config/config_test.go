@@ -10,6 +10,7 @@ import (
 
 func TestConfig(t *testing.T) {
 	os.Setenv("GOPKG_BIN_DIR", "BIN_DIR")
+	os.Setenv("GOPKG_BIN_DIR", "BIN_DIR")
 
 	u, err := user.Current()
 	if err != nil {
@@ -30,7 +31,7 @@ func TestConfig(t *testing.T) {
 		},
 	}
 
-	if err := c.Load(); err != nil {
+	if err := c.load(); err != nil {
 		t.Error(err)
 	}
 
@@ -51,6 +52,23 @@ func TestConfig(t *testing.T) {
 	}
 
 	os.Unsetenv("GOPKG_BIN_DIR")
+}
+
+func TestConfigMaintainerEnv(t *testing.T) {
+	os.Setenv("GOPKG_MAINTAINER_NAME", "Test")
+
+
+	c := &Config{}
+
+	if err := c.load(); err != nil {
+		t.Error(err)
+	}
+
+	if c.Maintainer.Name != "Test" {
+		t.Errorf("Config maintainer name not equal the expected value, got %s", c.Maintainer.Name)
+	}
+
+	os.Unsetenv("GOPKG_MAINTAINER_NAME")
 }
 
 func TestConfigDefault(t *testing.T) {
