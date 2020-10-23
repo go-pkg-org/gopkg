@@ -181,7 +181,12 @@ func execUpload(c *cli.Context) error {
 		return fmt.Errorf("missing pkg-path")
 	}
 
-	return upload.Upload(c.Args().First(), "http://127.0.0.1:8888")
+	conf, err := config.Default()
+	if err != nil {
+		return err
+	}
+
+	return upload.Upload(c.Args().First(), conf.UploadAddr)
 }
 
 func execSign(c *cli.Context) error {
@@ -210,7 +215,7 @@ func getCache() (cache.Cache, error) {
 		return nil, err
 	}
 
-	arcClient, err := archive.NewClient(conf.ArchiveURL)
+	arcClient, err := archive.NewClient(conf.ArchiveAddr)
 	if err != nil {
 		return nil, err
 	}

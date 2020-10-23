@@ -25,11 +25,12 @@ type Maintainer struct {
 
 // Config is the root object containg the configuration file.
 type Config struct {
-	BinDir     string     `yaml:"bin_dir" envconfig:"bin_dir"`
-	CachePath  string     `yaml:"cache_path" envconfig:"cache_path"`
-	Maintainer Maintainer `yaml:"maintainer" envconfig:"maintainer"`
-	SrcDir     string     `yaml:"src_dir"  envconfig:"src_dir"`
-	ArchiveURL string     `yaml:"archive_url"  envconfig:"archive_url"`
+	BinDir      string     `yaml:"bin_dir" envconfig:"bin_dir"`
+	CachePath   string     `yaml:"cache_path" envconfig:"cache_path"`
+	Maintainer  Maintainer `yaml:"maintainer" envconfig:"maintainer"`
+	SrcDir      string     `yaml:"src_dir"  envconfig:"src_dir"`
+	ArchiveAddr string     `yaml:"archive_addr"  envconfig:"archive_addr"`
+	UploadAddr  string     `yaml:"upload_addr"  envconfig:"upload_addr"`
 }
 
 // Load loads the configuration file from the users home directory.
