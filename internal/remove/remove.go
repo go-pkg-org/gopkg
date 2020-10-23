@@ -2,20 +2,21 @@ package remove
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/go-pkg-org/gopkg/internal/cache"
 	"github.com/go-pkg-org/gopkg/internal/config"
 	"github.com/rs/zerolog/log"
-	"os"
 )
 
 // Remove given package
 func Remove(pkgName string) error {
-	cachePath, err := config.GetCachePath()
+	config, err := config.Default()
 	if err != nil {
 		return err
 	}
 
-	c, err := cache.Read(cachePath)
+	c, err := cache.Read(config.CachePath)
 	if err != nil {
 		return err
 	}
@@ -34,7 +35,7 @@ func Remove(pkgName string) error {
 
 	c.RemovePackage(pkgName)
 
-	if err := cache.Write(cachePath, c); err != nil {
+	if err := cache.Write(config.CachePath, c); err != nil {
 		return err
 	}
 

@@ -2,17 +2,18 @@ package make
 
 import (
 	"fmt"
-	"github.com/go-pkg-org/gopkg/internal/config"
-	"github.com/go-pkg-org/gopkg/internal/control"
-	"github.com/go-pkg-org/gopkg/internal/pkg"
-	"github.com/go-pkg-org/gopkg/internal/util"
-	"github.com/rs/zerolog/log"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/go-pkg-org/gopkg/internal/config"
+	"github.com/go-pkg-org/gopkg/internal/control"
+	"github.com/go-pkg-org/gopkg/internal/pkg"
+	"github.com/go-pkg-org/gopkg/internal/util"
+	"github.com/rs/zerolog/log"
 )
 
 // Make create a brand new control package from given import path
@@ -21,6 +22,11 @@ func Make(importPath string) error {
 
 	if _, err := os.Stat(directory); err == nil {
 		return fmt.Errorf("already existing package directory: %s", directory)
+	}
+
+	config, err := config.Default()
+	if err != nil {
+		return err
 	}
 
 	// Fetch & extract upstream source code

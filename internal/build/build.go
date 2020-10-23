@@ -2,15 +2,16 @@ package build
 
 import (
 	"fmt"
-	"github.com/go-pkg-org/gopkg/internal/config"
-	"github.com/go-pkg-org/gopkg/internal/control"
-	"github.com/go-pkg-org/gopkg/internal/pkg"
-	"github.com/rs/zerolog/log"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/go-pkg-org/gopkg/internal/config"
+	"github.com/go-pkg-org/gopkg/internal/control"
+	"github.com/go-pkg-org/gopkg/internal/pkg"
+	"github.com/rs/zerolog/log"
 )
 
 // Build will build control package located as directory
@@ -25,6 +26,11 @@ func Build(path string) error {
 			return err
 		}
 		path = p
+	}
+
+	config, err := config.Default()
+	if err != nil {
+		return err
 	}
 
 	m, c, err := control.ReadCtrlDirectory(path)

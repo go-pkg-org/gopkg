@@ -2,6 +2,7 @@ package list
 
 import (
 	"fmt"
+
 	"github.com/go-pkg-org/gopkg/internal/cache"
 	"github.com/go-pkg-org/gopkg/internal/config"
 	"github.com/rs/zerolog/log"
@@ -13,12 +14,12 @@ func List(onlyInstalled bool) error {
 		return fmt.Errorf("not implemented at the moment")
 	}
 
-	cachePath, err := config.GetCachePath()
+	config, err := config.Default()
 	if err != nil {
 		return err
 	}
 
-	c, err := cache.Read(cachePath)
+	c, err := cache.Read(config.CachePath)
 	if err != nil {
 		return err
 	}
