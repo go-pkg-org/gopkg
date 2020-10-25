@@ -2,6 +2,7 @@ package pkgarchiver
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/go-pkg-org/gopkg/internal/archive"
 	"github.com/go-pkg-org/gopkg/internal/pkg"
@@ -17,7 +18,7 @@ import (
 )
 
 // ErrMissingPkgDefinition is returned when missing package definition from archive
-var ErrMissingPkgDefinition = fmt.Errorf("missing package definition (package.yaml)")
+var ErrMissingPkgDefinition = errors.New("missing package definition (package.yaml)")
 
 // Execute is the main entrypoint of pkgarchiver
 func Execute(c *cli.Context) error {

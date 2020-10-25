@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/go-pkg-org/gopkg/internal/archive"
 	"github.com/go-pkg-org/gopkg/internal/build"
@@ -92,7 +93,7 @@ func main() {
 
 func execMake(c *cli.Context) error {
 	if !c.Args().Present() {
-		return fmt.Errorf("missing import-path")
+		return errors.New("missing import-path")
 	}
 	return make2.Make(c.Args().First())
 }
@@ -113,7 +114,7 @@ func execBuild(c *cli.Context) error {
 
 func execInstall(c *cli.Context) error {
 	if !c.Args().Present() {
-		return fmt.Errorf("missing pkg")
+		return errors.New("missing pkg")
 	}
 
 	ca, err := getCache()
@@ -142,7 +143,7 @@ func execInstall(c *cli.Context) error {
 
 func execRemove(c *cli.Context) error {
 	if !c.Args().Present() {
-		return fmt.Errorf("missing pkg-name")
+		return errors.New("missing pkg-name")
 	}
 
 	ca, err := getCache()
@@ -178,7 +179,7 @@ func execList(c *cli.Context) error {
 
 func execUpload(c *cli.Context) error {
 	if !c.Args().Present() {
-		return fmt.Errorf("missing pkg-path")
+		return errors.New("missing pkg-path")
 	}
 
 	conf, err := config.Default()
@@ -191,7 +192,7 @@ func execUpload(c *cli.Context) error {
 
 func execSign(c *cli.Context) error {
 	if !c.Args().Present() {
-		return fmt.Errorf("missing pkg-path")
+		return errors.New("missing pkg-path")
 	}
 
 	return sign.Sign(c.Args().First())

@@ -2,6 +2,7 @@ package cache
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/go-pkg-org/gopkg/internal/archive"
 	"github.com/go-pkg-org/gopkg/internal/config"
@@ -15,10 +16,10 @@ import (
 )
 
 // ErrPackageAlreadyInstalled is returns when the package we are trying to install is already installed
-var ErrPackageAlreadyInstalled = fmt.Errorf("package is already installed")
+var ErrPackageAlreadyInstalled = errors.New("package is already installed")
 
 // ErrWrongTarget is returned when the package we are trying to install is not compatible
-var ErrWrongTarget = fmt.Errorf("package is not compatible")
+var ErrWrongTarget = errors.New("package is not compatible")
 
 // Cache is a local gopkg cache
 type Cache interface {

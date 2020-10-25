@@ -1,7 +1,7 @@
 package sign
 
 import (
-	"fmt"
+	"errors"
 	"github.com/go-pkg-org/gopkg/internal/config"
 	"github.com/rs/zerolog/log"
 	"os/exec"
@@ -16,7 +16,7 @@ func Sign(pkgPath string) error {
 
 	key := conf.Maintainer.SigningKey
 	if key == "TODO" {
-		return fmt.Errorf("please configure a signing key trough GOPKG_SIGNING_KEY env variable")
+		return errors.New("please configure a signing key trough GOPKG_SIGNING_KEY env variable")
 	}
 
 	log.Debug().Str("signingKey", key).Str("package", pkgPath).Msg("Signing package")

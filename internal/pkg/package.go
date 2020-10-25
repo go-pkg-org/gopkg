@@ -3,6 +3,7 @@ package pkg
 import (
 	"archive/tar"
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/go-pkg-org/gopkg/internal/util"
 	"github.com/rs/zerolog/log"
@@ -129,7 +130,7 @@ func Read(r io.Reader) (File, error) {
 func Write(path string, files []Entry, overwrite bool) error {
 	if !overwrite {
 		if _, err := os.Stat(path); err != nil {
-			return fmt.Errorf("failed to create new tar source (file already exist)")
+			return errors.New("failed to create new tar source (file already exist)")
 		}
 	}
 
@@ -168,7 +169,7 @@ func Write(path string, files []Entry, overwrite bool) error {
 func GetFileName(name, version, os, arch string, pkgType Type) (string, error) {
 	// validate common information
 	if name == "" || version == "" {
-		return "", fmt.Errorf("missing information to build package name")
+		return "", errors.New("missing information to build package name")
 	}
 
 	pkgName := GetName(name, pkgType == Source)
@@ -180,7 +181,7 @@ func GetFileName(name, version, os, arch string, pkgType Type) (string, error) {
 	case Binary:
 		// validate binary specific information
 		if os == "" || arch == "" {
-			return "", fmt.Errorf("missing information to build package name")
+			return "", errors.New("missing information to build package name")
 		}
 
 		return fmt.Sprintf("%s_%s_%s_%s.%s", pkgName, version, os, arch, FileExt), nil
