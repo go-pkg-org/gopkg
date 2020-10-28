@@ -39,7 +39,6 @@ jobs:
 
       - name: Lint source code
         uses: golangci/golangci-lint-action@v2
-        run: golint -set_exit_status ./...
         with:
           version: v1.29
 
