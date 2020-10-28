@@ -3,15 +3,19 @@ package pkg
 import (
 	"archive/tar"
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/go-pkg-org/gopkg/internal/util"
 	"github.com/rs/zerolog/log"
+	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 )
+
+//go:generate mockgen -destination=../pkg_mock/package_mock.go -package=pkg_mock . File
 
 // FileExt is the extension for package files
 const (
@@ -30,6 +34,16 @@ const (
 	// Binary are package providing executable
 	Binary Type = "binary"
 )
+
+// File represent .pkg file content
+type File interface {
+	Metadata() (Meta, error)
+	Files() map[string][]byte
+}
+
+type file struct {
+	content map[string][]byte
+}
 
 // Entry is a tiny struct to contain data for a specific
 // entry that will be archived into a pkg file.
@@ -76,22 +90,28 @@ func CreateEntries(path string, pathPrefix string, excludedFiles []string) ([]En
 	return fileList, nil
 }
 
-// Read reads a package and returns content.
-func Read(path string) (map[string][]byte, error) {
-	result := map[string][]byte{}
+// ReadFile reads a package from file and returns content.
+func ReadFile(path string) (File, error) {
 	file, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
 	buffer := bytes.NewBuffer(file)
+	return Read(buffer)
+}
 
-	tr := tar.NewReader(buffer)
+// Read reads a package from io.Reader and returns content.
+func Read(r io.Reader) (File, error) {
+	result := map[string][]byte{}
+
+	tr := tar.NewReader(r)
 	for {
 		header, err := tr.Next()
 		if err == io.EOF {
 			break
 		}
+
 		if err != nil {
 			return nil, err
 		}
@@ -103,14 +123,14 @@ func Read(path string) (map[string][]byte, error) {
 
 		result[header.Name] = out.Bytes()
 	}
-	return result, nil
+	return &file{content: result}, nil
 }
 
 // Write creates a tar file from a set of ArchiveEntries.
 func Write(path string, files []Entry, overwrite bool) error {
 	if !overwrite {
 		if _, err := os.Stat(path); err != nil {
-			return fmt.Errorf("failed to create new tar source (file already exist)")
+			return errors.New("failed to create new tar source (file already exist)")
 		}
 	}
 
@@ -149,7 +169,7 @@ func Write(path string, files []Entry, overwrite bool) error {
 func GetFileName(name, version, os, arch string, pkgType Type) (string, error) {
 	// validate common information
 	if name == "" || version == "" {
-		return "", fmt.Errorf("missing information to build package name")
+		return "", errors.New("missing information to build package name")
 	}
 
 	pkgName := GetName(name, pkgType == Source)
@@ -161,7 +181,7 @@ func GetFileName(name, version, os, arch string, pkgType Type) (string, error) {
 	case Binary:
 		// validate binary specific information
 		if os == "" || arch == "" {
-			return "", fmt.Errorf("missing information to build package name")
+			return "", errors.New("missing information to build package name")
 		}
 
 		return fmt.Sprintf("%s_%s_%s_%s.%s", pkgName, version, os, arch, FileExt), nil
@@ -196,4 +216,19 @@ func GetName(importPath string, isSrc bool) string {
 	}
 
 	return name
+}
+
+// Metadata returns the package metadata
+func (p *file) Metadata() (Meta, error) {
+	var m Meta
+	if err := yaml.Unmarshal(p.content["package.yaml"], &m); err != nil {
+		return Meta{}, err
+	}
+
+	return m, nil
+}
+
+// Files returns the package file
+func (p *file) Files() map[string][]byte {
+	return p.content
 }

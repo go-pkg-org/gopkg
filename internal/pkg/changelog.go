@@ -1,4 +1,4 @@
-package control
+package pkg
 
 import (
 	"fmt"
@@ -26,18 +26,23 @@ type Release struct {
 	Changes []string
 }
 
-// NewChangelog create a brand new changelog
+// LastRelease return the latest release from changelog
+func (c *Changelog) LastRelease() (Release, error) {
+	return c.Releases[len(c.Releases)-1], nil
+}
+
+// newChangelog create a brand new changelog
 func newChangelog(initialVersion, uploader string) Changelog {
 	return Changelog{
 		Releases: []Release{{
 			Version:  fmt.Sprintf("%s-1", initialVersion),
 			Uploader: uploader,
-			Changes:  []string{"Initial release"},
+			Changes:  []string{"Initial packaging"},
 		}},
 	}
 }
 
-// WriteChangelog write the given changelog
+// writeChangelog write the given changelog
 func writeChangelog(c Changelog, path string) error {
 	b, err := yaml.Marshal(c)
 	if err != nil {
@@ -47,7 +52,7 @@ func writeChangelog(c Changelog, path string) error {
 	return ioutil.WriteFile(filepath.Join(path, changelogFile), b, 0640)
 }
 
-// ReadChangelog read changelog from file
+// readChangelog read changelog from file
 func readChangelog(path string) (Changelog, error) {
 	var c Changelog
 

@@ -18,16 +18,19 @@ const configFile = ".gopkg.yaml"
 
 // Maintainer is the object containg info about the maintainer.
 type Maintainer struct {
-	Email string `yaml:"email" envconfig:"email"`
-	Name  string `yaml:"name" envconfig:"name"`
+	Email      string `yaml:"email" envconfig:"email"`
+	Name       string `yaml:"name" envconfig:"name"`
+	SigningKey string `yaml:"signing_key" envconfig:"signing_key"`
 }
 
 // Config is the root object containg the configuration file.
 type Config struct {
-	BinDir     string     `yaml:"bin_dir" envconfig:"bin_dir"`
-	CachePath  string     `yaml:"cache_path" envconfig:"cache_path"`
-	Maintainer Maintainer `yaml:"maintainer" envconfig:"maintainer"`
-	SrcDir     string     `yaml:"src_dir"  envconfig:"src_dir"`
+	BinDir      string     `yaml:"bin_dir" envconfig:"bin_dir"`
+	CachePath   string     `yaml:"cache_path" envconfig:"cache_path"`
+	Maintainer  Maintainer `yaml:"maintainer" envconfig:"maintainer"`
+	SrcDir      string     `yaml:"src_dir"  envconfig:"src_dir"`
+	ArchiveAddr string     `yaml:"archive_addr"  envconfig:"archive_addr"`
+	UploadAddr  string     `yaml:"upload_addr"  envconfig:"upload_addr"`
 }
 
 // Load loads the configuration file from the users home directory.

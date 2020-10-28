@@ -1,4 +1,4 @@
-package control
+package pkg
 
 import (
 	"fmt"
@@ -10,8 +10,8 @@ import (
 
 const metadataFile = "metadata.yaml"
 
-// Metadata represent the package metadata
-type Metadata struct {
+// ControlMeta represent the control package metadata
+type ControlMeta struct {
 	// The Go import path
 	ImportPath string
 	// List of the package maintainers
@@ -20,11 +20,11 @@ type Metadata struct {
 	// The package build dependencies (i.e what we need to pull before building the package)
 	BuildDependencies []string `yaml:"build_dependencies"`
 	// List of the packages built by this control package
-	Packages []Package
+	Packages []Meta
 }
 
-// Package represent a package installable
-type Package struct {
+// Meta represent a package information
+type Meta struct {
 	// The package alias (i.e what the user will use to identify the package)
 	Alias string
 	// Main is the full path to the file containing the `func main()` sequence
@@ -35,10 +35,18 @@ type Package struct {
 	Description string
 	// Targets describe the build target (os,arches)
 	Targets map[string][]string `yaml:"targets,omitempty"`
+	// These fields below are copied into the package.yaml definition
+	TargetOS       string `yaml:"target_os,omitempty"`
+	TargetArch     string `yaml:"target_arch,omitempty"`
+	ReleaseVersion string `yaml:"release_version,omitempty"`
 }
 
-// writeMetadata write the given metadata
-func writeMetadata(m Metadata, path string) error {
+// IsSource determinate if package is a source one
+func (m *Meta) IsSource() bool {
+	return m.Main == ""
+}
+
+func writeControlMeta(m ControlMeta, path string) error {
 	b, err := yaml.Marshal(m)
 	if err != nil {
 		return err
@@ -47,18 +55,17 @@ func writeMetadata(m Metadata, path string) error {
 	return ioutil.WriteFile(fmt.Sprintf("%s/%s", path, metadataFile), b, 0640)
 }
 
-// ReadMetadata read metadata from file
-func readMetadata(path string) (Metadata, error) {
-	var m Metadata
+func readControlMetadata(path string) (ControlMeta, error) {
+	var m ControlMeta
 
 	f, err := os.Open(filepath.Join(path, metadataFile))
 	if err != nil {
-		return Metadata{}, err
+		return ControlMeta{}, err
 	}
 	defer f.Close()
 
 	if err := yaml.NewDecoder(f).Decode(&m); err != nil {
-		return Metadata{}, err
+		return ControlMeta{}, err
 	}
 
 	return m, nil

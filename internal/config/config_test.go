@@ -57,7 +57,6 @@ func TestConfig(t *testing.T) {
 func TestConfigMaintainerEnv(t *testing.T) {
 	os.Setenv("GOPKG_MAINTAINER_NAME", "Test")
 
-
 	c := &Config{}
 
 	if err := c.load(); err != nil {

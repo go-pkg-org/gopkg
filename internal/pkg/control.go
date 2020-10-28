@@ -1,4 +1,4 @@
-package control
+package pkg
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ const GoPkgDir = ".gopkg"
 
 // CreateCtrlDirectory create a brand new control directory at given path
 // using given details
-func CreateCtrlDirectory(path, version, uploader string, metadata Metadata) error {
+func CreateCtrlDirectory(path, version, uploader string, metadata ControlMeta) error {
 	rootDir := filepath.Join(path, GoPkgDir)
 
 	if _, err := os.Stat(rootDir); err == nil {
@@ -26,7 +26,7 @@ func CreateCtrlDirectory(path, version, uploader string, metadata Metadata) erro
 	}
 
 	// Create the metadata file
-	if err := writeMetadata(metadata, rootDir); err != nil {
+	if err := writeControlMeta(metadata, rootDir); err != nil {
 		return err
 	}
 
@@ -40,17 +40,17 @@ func CreateCtrlDirectory(path, version, uploader string, metadata Metadata) erro
 
 // ReadCtrlDirectory reads control directory at given path
 // and returns metadata & changelog
-func ReadCtrlDirectory(path string) (Metadata, Changelog, error) {
+func ReadCtrlDirectory(path string) (ControlMeta, Changelog, error) {
 	rootDir := filepath.Join(path, GoPkgDir)
 
-	m, err := readMetadata(rootDir)
+	m, err := readControlMetadata(rootDir)
 	if err != nil {
-		return Metadata{}, Changelog{}, err
+		return ControlMeta{}, Changelog{}, err
 	}
 
 	c, err := readChangelog(rootDir)
 	if err != nil {
-		return Metadata{}, Changelog{}, err
+		return ControlMeta{}, Changelog{}, err
 	}
 
 	return m, c, nil

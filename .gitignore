@@ -1,2 +1,3 @@
 gopkg.exe
 vendor
+**/**_mock.go
