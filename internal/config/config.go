@@ -89,9 +89,10 @@ func Default() (*Config, error) {
 	}
 
 	c := &Config{
-		BinDir:    filepath.Join(u.HomeDir, GoPkgDir, "bin"),
-		CachePath: filepath.Join(u.HomeDir, GoPkgDir, "cache.json"),
-		SrcDir:    filepath.Join(u.HomeDir, GoPkgDir, "src"),
+		ArchiveAddr: "https://archive.gopkg.org/",
+		BinDir:      filepath.Join(u.HomeDir, GoPkgDir, "bin"),
+		CachePath:   filepath.Join(u.HomeDir, GoPkgDir, "cache.json"),
+		SrcDir:      filepath.Join(u.HomeDir, GoPkgDir, "src"),
 	}
 
 	if err := c.create(); err != nil {
