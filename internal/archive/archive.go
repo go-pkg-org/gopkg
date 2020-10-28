@@ -9,11 +9,12 @@ type Index struct {
 
 // Package represent an installable package
 type Package struct {
+	// Description contains the package description
+	Description string
 	// Releases represent the existing package releases
 	Releases map[string][]Release
 	// LatestRelease contains the package latest release
 	LatestRelease string
-	// TODO description
 }
 
 // Release represent the release of a package

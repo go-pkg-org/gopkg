@@ -156,6 +156,7 @@ func handleAcceptedPackage(
 		p = index.Packages[meta.Alias]
 	} else {
 		p = archive.Package{
+			Description:   meta.Description,
 			Releases:      map[string][]archive.Release{},
 			LatestRelease: "",
 		}
