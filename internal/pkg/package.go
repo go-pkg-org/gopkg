@@ -224,10 +224,10 @@ func (p *file) Metadata() (Meta, error) {
 	var m Meta
 	var c []byte
 
-	if len(p.content["package.yaml"]) > 0 {
-		c = p.content["package.yaml"]
-	} else if len(p.content["package.yml"]) > 0 {
-		c = p.content["package.yml"]
+	if val, ok := p.content["package.yaml"]; ok {
+		c = val
+	} else if val, ok := p.content["package.yml"]; ok {
+		c = val
 	}
 
 	if err := yaml.Unmarshal(c, &m); err != nil {
