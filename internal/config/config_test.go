@@ -6,8 +6,6 @@ import (
 	"os/user"
 	"path/filepath"
 	"testing"
-
-	"github.com/go-pkg-org/gopkg/internal/util/file"
 )
 
 func TestConfig(t *testing.T) {
@@ -34,9 +32,7 @@ func TestConfig(t *testing.T) {
 	}
 
 	if err := c.load(); err != nil {
-		if err != file.ErrNoFileFound {
-			t.Error(err)
-		}
+		t.Error(err)
 	}
 
 	if c.BinDir != "BIN_DIR" {
