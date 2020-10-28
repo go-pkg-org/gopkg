@@ -11,7 +11,7 @@ func TestMeta_Source(t *testing.T) {
 		Targets:     map[string][]string{},
 	}
 
-	if m.Source() {
+	if m.IsSource() {
 		t.FailNow()
 	}
 
@@ -23,7 +23,7 @@ func TestMeta_Source(t *testing.T) {
 		Targets:     map[string][]string{},
 	}
 
-	if !m.Source() {
+	if !m.IsSource() {
 		t.FailNow()
 	}
 }

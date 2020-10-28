@@ -41,8 +41,8 @@ type Meta struct {
 	ReleaseVersion string `yaml:"release_version,omitempty"`
 }
 
-// Source determinate if package is a source one
-func (m *Meta) Source() bool {
+// IsSource determinate if package is a source one
+func (m *Meta) IsSource() bool {
 	return m.Main == ""
 }
 

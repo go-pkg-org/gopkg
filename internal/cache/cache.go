@@ -74,7 +74,7 @@ func (c *cache) installPkg(pkgFile pkg.File) (pkg.Meta, error) {
 
 	var files []string
 	// source package can be installed no matter what
-	if meta.Source() {
+	if meta.IsSource() {
 		files, err = installSourcePkg(pkgFile, c.conf.SrcDir)
 		if err != nil {
 			return pkg.Meta{}, err

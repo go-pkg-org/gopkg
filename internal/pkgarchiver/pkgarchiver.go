@@ -122,7 +122,7 @@ func handleAcceptedPackage(
 	// Control package cannot be allowed at the moment since doesn't contains package.yaml file
 	// and thus GetMetadata() will fail prematurely
 	var pkgType pkg.Type
-	if meta.Source() {
+	if meta.IsSource() {
 		pkgType = pkg.Source
 	} else {
 		pkgType = pkg.Binary
