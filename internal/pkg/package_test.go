@@ -102,18 +102,18 @@ func TestWrite(t *testing.T) {
 func TestRead(t *testing.T) {
 	dir, _ := ioutil.TempDir("", "gopkg_*")
 	t.Cleanup(func() {
-		os.RemoveAll(dir)
+		_ = os.RemoveAll(dir)
 	})
 
 	jsonFile, _ := ioutil.TempFile(dir, "*.json")
-	jsonFile.WriteString("This is a json file")
-	jsonFile.Close()
+	_, _ = jsonFile.WriteString("This is a json file")
+	_ = jsonFile.Close()
 	txtFile, _ := ioutil.TempFile(dir, "*.txt")
-	txtFile.WriteString("This is a txt file")
-	txtFile.Close()
+	_, _ = txtFile.WriteString("This is a txt file")
+	_ = txtFile.Close()
 	xmlFile, _ := ioutil.TempFile(dir, "*.xml")
-	xmlFile.WriteString("This is an xml file")
-	xmlFile.Close()
+	_, _ = xmlFile.WriteString("This is an xml file")
+	_ = xmlFile.Close()
 
 	err := Write(filepath.Join(dir, "out.pkg"), []Entry{
 		{xmlFile.Name(), "test/xmlfile.xml"},

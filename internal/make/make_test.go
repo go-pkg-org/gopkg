@@ -101,9 +101,7 @@ func runGitCmd(dir string, env []string, args ...string) error {
 
 	if len(env) > 0 {
 		cmd.Env = os.Environ()
-		for _, val := range env {
-			cmd.Env = append(cmd.Env, val)
-		}
+		cmd.Env = append(cmd.Env, env...)
 	}
 
 	b, err := cmd.Output()

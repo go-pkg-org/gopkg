@@ -189,12 +189,12 @@ func readFormFile(r *http.Request, paramName string) ([]byte, *multipart.FileHea
 		return nil, nil, err
 	}
 
-	f.Seek(0, io.SeekStart)
+	_, _ = f.Seek(0, io.SeekStart)
 	b, err := ioutil.ReadAll(f)
 	if err != nil {
 		return nil, nil, err
 	}
-	f.Close()
+	_ = f.Close()
 
 	return b, header, nil
 }

@@ -26,9 +26,9 @@ func main() {
 		Version: "0.1.0",
 		Usage:   "Reliable package manager for Golang software",
 		Authors: []*cli.Author{
-			{"Aloïs Micard", "alois@micard.lu"},
-			{"Fredrik Forsmo", "hello@frozzare.com"},
-			{"Johannes Tegnér", "johannes@jitesoft.com"},
+			{Name: "Aloïs Micard", Email: "alois@micard.lu"},
+			{Name: "Fredrik Forsmo", Email: "hello@frozzare.com"},
+			{Name: "Johannes Tegnér", Email: "johannes@jitesoft.com"},
 		},
 		Commands: []*cli.Command{
 			{

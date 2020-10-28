@@ -12,7 +12,7 @@ import (
 
 func tempFileName(prefix, suffix string) string {
 	randBytes := make([]byte, 16)
-	rand.Read(randBytes)
+	_, _ = rand.Read(randBytes)
 	return filepath.Join(os.TempDir(), prefix+hex.EncodeToString(randBytes)+suffix)
 }
 
@@ -33,7 +33,7 @@ func TestFindByExtensions(t *testing.T) {
 			path = path + ".yaml"
 		}
 
-		os.OpenFile(path, os.O_RDONLY|os.O_CREATE, 0666)
+		_, _ = os.OpenFile(path, os.O_RDONLY|os.O_CREATE, 0666)
 
 		out, err := FindByExtensions(file, extensions)
 		if err != nil {

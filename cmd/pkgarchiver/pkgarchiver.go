@@ -17,9 +17,9 @@ func main() {
 		Version: "0.0.1",
 		Usage:   "Package manager for Golang written applications",
 		Authors: []*cli.Author{
-			{"Aloïs Micard", "alois@micard.lu"},
-			{"Fredrik Forsmo", "hello@frozzare.com"},
-			{"Johannes Tegnér", "johannes@jitesoft.com"},
+			{Name: "Aloïs Micard", Email: "alois@micard.lu"},
+			{Name: "Fredrik Forsmo", Email: "hello@frozzare.com"},
+			{Name: "Johannes Tegnér", Email: "johannes@jitesoft.com"},
 		},
 		Flags: []cli.Flag{
 			&cli.StringFlag{
