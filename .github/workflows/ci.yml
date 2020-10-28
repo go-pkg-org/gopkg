@@ -37,15 +37,16 @@ jobs:
         run: |
           go get -v github.com/golang/mock/mockgen@v1.4.4
 
+      - name: Generate mock
+        run: go generate ./...
+
       - name: Lint source code
         uses: golangci/golangci-lint-action@v2
         with:
           version: v1.29
 
       - name: Test
-        run: |
-          go generate ./...
-          go test ./...
+        run: go test ./...
 
       - name: Update go report card
         if: success() && matrix.platform == 'ubuntu-latest'
