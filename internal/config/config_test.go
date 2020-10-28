@@ -18,8 +18,7 @@ func TestConfig(t *testing.T) {
 	}
 
 	file := filepath.Join(u.HomeDir, ".gopkg.yml")
-	body := []byte(`maintainer:
-  email: test@example.com`)
+	body := []byte("maintainer:\nemail: test@example.com")
 
 	if err := ioutil.WriteFile(file, body, 0644); err != nil {
 		t.Error(err)

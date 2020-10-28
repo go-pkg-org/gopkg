@@ -47,7 +47,7 @@ func (c *Config) load() error {
 			return err
 		}
 
-		err = yaml.Unmarshal([]byte(out), &c)
+		err = yaml.Unmarshal(out, &c)
 		if err != nil {
 			return err
 		}

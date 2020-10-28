@@ -9,9 +9,6 @@ import (
 
 //go:generate mockgen -destination=../archive_mock/client_mock.go -package=archive_mock . Client
 
-// DefaultURL is the default production URL of our archive
-const DefaultURL = "https://archive.gopkg.org"
-
 // Client is an interface to dial with an archive
 type Client interface {
 	// GetIndex returns the up-to-date archive index

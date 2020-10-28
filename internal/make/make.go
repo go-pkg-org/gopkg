@@ -214,7 +214,7 @@ func getBinaryPackages(importPath, directory string) ([]pkg.Meta, error) {
 }
 
 // getUpstreamSource fetch latest available upstream source
-// this method return path to upstream source, version, and error if any
+// this method return path to upstream source
 func getUpstreamSource(importPath, where string) (string, error) {
 	remote := fmt.Sprintf("https://%s.git", importPath)
 	log.Debug().Str("remote", remote).Msg("Found upstream remote")
