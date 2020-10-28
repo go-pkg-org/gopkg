@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/go-pkg-org/gopkg/internal/util/file"
+	fileutil "github.com/go-pkg-org/gopkg/internal/util/file"
 	"gopkg.in/yaml.v2"
 )
 
@@ -60,7 +60,7 @@ func writeControlMeta(m ControlMeta, path string) error {
 func readControlMetadata(path string) (ControlMeta, error) {
 	var m ControlMeta
 
-	path, err := file.FindByExtensions(filepath.Join(path, metadataFile), []string{"yaml", "yml"})
+	path, err := fileutil.FindByExtensions(filepath.Join(path, metadataFile), []string{"yaml", "yml"})
 	if err != nil {
 		return ControlMeta{}, err
 	}
