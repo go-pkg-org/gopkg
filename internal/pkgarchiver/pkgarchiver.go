@@ -4,6 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"mime/multipart"
+	"net/http"
+
 	"github.com/go-pkg-org/gopkg/internal/archive"
 	"github.com/go-pkg-org/gopkg/internal/pkg"
 	"github.com/go-pkg-org/gopkg/internal/pkgarchiver/keyring"
@@ -11,10 +16,6 @@ import (
 	"github.com/go-pkg-org/gopkg/internal/pkgarchiver/storage"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
-	"io"
-	"io/ioutil"
-	"mime/multipart"
-	"net/http"
 )
 
 // ErrMissingPkgDefinition is returned when missing package definition from archive

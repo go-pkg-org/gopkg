@@ -2,10 +2,12 @@ package pkg
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/go-pkg-org/gopkg/internal/util/file"
+	"gopkg.in/yaml.v2"
 )
 
 const metadataFile = "metadata.yaml"

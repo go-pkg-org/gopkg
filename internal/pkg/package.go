@@ -5,14 +5,15 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/go-pkg-org/gopkg/internal/util"
-	"github.com/rs/zerolog/log"
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/go-pkg-org/gopkg/internal/util"
+	"github.com/rs/zerolog/log"
+	"gopkg.in/yaml.v2"
 )
 
 //go:generate mockgen -destination=../pkg_mock/package_mock.go -package=pkg_mock . File
