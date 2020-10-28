@@ -5,14 +5,15 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/go-pkg-org/gopkg/internal/util"
-	"github.com/rs/zerolog/log"
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/go-pkg-org/gopkg/internal/util"
+	"github.com/rs/zerolog/log"
+	"gopkg.in/yaml.v2"
 )
 
 //go:generate mockgen -destination=../pkg_mock/package_mock.go -package=pkg_mock . File
@@ -221,7 +222,15 @@ func GetName(importPath string, isSrc bool) string {
 // Metadata returns the package metadata
 func (p *file) Metadata() (Meta, error) {
 	var m Meta
-	if err := yaml.Unmarshal(p.content["package.yaml"], &m); err != nil {
+	var c []byte
+
+	if val, ok := p.content["package.yaml"]; ok {
+		c = val
+	} else if val, ok := p.content["package.yml"]; ok {
+		c = val
+	}
+
+	if err := yaml.Unmarshal(c, &m); err != nil {
 		return Meta{}, err
 	}
 

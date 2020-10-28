@@ -33,7 +33,7 @@ type Config struct {
 	UploadAddr  string     `yaml:"upload_addr"  envconfig:"upload_addr"`
 }
 
-// Load loads the configuration file from the users home directory.
+// load loads the configuration file from the users home directory.
 func (c *Config) load() error {
 	u, err := user.Current()
 	if err != nil {
@@ -61,6 +61,26 @@ func (c *Config) load() error {
 	return nil
 }
 
+// create creates the configuration file.
+func (c *Config) create() error {
+	u, err := user.Current()
+	if err != nil {
+		return err
+	}
+
+	_, err = file.FindByExtensions(filepath.Join(u.HomeDir, configFile), []string{"yaml", "yml"})
+	if err == nil {
+		return nil
+	}
+
+	buf, err := yaml.Marshal(c)
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(filepath.Join(u.HomeDir, configFile), buf, 0644)
+}
+
 // Default returns a default configuration.
 func Default() (*Config, error) {
 	u, err := user.Current()
@@ -69,9 +89,14 @@ func Default() (*Config, error) {
 	}
 
 	c := &Config{
-		BinDir:    filepath.Join(u.HomeDir, GoPkgDir, "bin"),
-		CachePath: filepath.Join(u.HomeDir, GoPkgDir, "cache.json"),
-		SrcDir:    filepath.Join(u.HomeDir, GoPkgDir, "src"),
+		ArchiveAddr: "https://archive.gopkg.org/",
+		BinDir:      filepath.Join(u.HomeDir, GoPkgDir, "bin"),
+		CachePath:   filepath.Join(u.HomeDir, GoPkgDir, "cache.json"),
+		SrcDir:      filepath.Join(u.HomeDir, GoPkgDir, "src"),
+	}
+
+	if err := c.create(); err != nil {
+		return nil, err
 	}
 
 	if err := c.load(); err != nil {

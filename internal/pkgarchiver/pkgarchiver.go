@@ -4,6 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"mime/multipart"
+	"net/http"
+
 	"github.com/go-pkg-org/gopkg/internal/archive"
 	"github.com/go-pkg-org/gopkg/internal/pkg"
 	"github.com/go-pkg-org/gopkg/internal/pkgarchiver/keyring"
@@ -11,14 +16,10 @@ import (
 	"github.com/go-pkg-org/gopkg/internal/pkgarchiver/storage"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
-	"io"
-	"io/ioutil"
-	"mime/multipart"
-	"net/http"
 )
 
 // ErrMissingPkgDefinition is returned when missing package definition from archive
-var ErrMissingPkgDefinition = errors.New("missing package definition (package.yaml)")
+var ErrMissingPkgDefinition = errors.New("missing package definition (package.yaml or package.yml)")
 
 // Execute is the main entrypoint of pkgarchiver
 func Execute(c *cli.Context) error {
@@ -119,8 +120,8 @@ func handleAcceptedPackage(
 		Str("arch", meta.TargetArch).
 		Msg("Uploading package")
 
-	// Control package cannot be allowed at the moment since doesn't contains package.yaml file
-	// and thus GetMetadata() will fail prematurely
+	// Control package cannot be allowed at the moment since doesn't contains package.yaml
+	// or package.yml file and thus GetMetadata() will fail prematurely
 	var pkgType pkg.Type
 	if meta.IsSource() {
 		pkgType = pkg.Source
