@@ -221,7 +221,15 @@ func GetName(importPath string, isSrc bool) string {
 // Metadata returns the package metadata
 func (p *file) Metadata() (Meta, error) {
 	var m Meta
-	if err := yaml.Unmarshal(p.content["package.yaml"], &m); err != nil {
+	var c []byte
+
+	if len(p.content["package.yaml"]) > 0 {
+		c = p.content["package.yaml"]
+	} else if len(p.content["package.yml"]) > 0 {
+		c = p.content["package.yml"]
+	}
+
+	if err := yaml.Unmarshal(c, &m); err != nil {
 		return Meta{}, err
 	}
 

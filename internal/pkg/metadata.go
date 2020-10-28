@@ -58,7 +58,12 @@ func writeControlMeta(m ControlMeta, path string) error {
 func readControlMetadata(path string) (ControlMeta, error) {
 	var m ControlMeta
 
-	f, err := os.Open(filepath.Join(path, metadataFile))
+	path, err := file.FindByExtensions(filepath.Join(path, metadataFile), []string{"yaml", "yml"})
+	if err != nil {
+		return ControlMeta{}, err
+	}
+
+	f, err := os.Open(path)
 	if err != nil {
 		return ControlMeta{}, err
 	}
