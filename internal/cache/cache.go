@@ -103,8 +103,8 @@ func (c *cache) installPkg(pkgFile pkg.File) (pkg.Meta, error) {
 func installSourcePkg(pkgFile pkg.File, sourceInstallDir string) ([]string, error) {
 	var files []string
 	for path, content := range pkgFile.Files() {
-		// Do not install package.yaml file
-		if path == "package.yaml" {
+		// Do not install package.yaml or package.yml file
+		if path == "package.yaml" || path == "package.yml" {
 			continue
 		}
 
@@ -130,8 +130,8 @@ func installSourcePkg(pkgFile pkg.File, sourceInstallDir string) ([]string, erro
 func installBinaryPkg(pkgFile pkg.File, binaryInstallDir string) ([]string, error) {
 	var files []string
 	for path, content := range pkgFile.Files() {
-		// Do not install package.yaml file
-		if path == "package.yaml" {
+		// Do not install package.yaml or package.yml file
+		if path == "package.yaml" || path == "package.yml" {
 			continue
 		}
 
