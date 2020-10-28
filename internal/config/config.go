@@ -41,18 +41,16 @@ func (c *Config) load() error {
 	}
 
 	path, err := file.FindByExtensions(filepath.Join(u.HomeDir, configFile), []string{"yaml", "yml"})
-	if err != nil {
-		return err
-	}
+	if err == nil {
+		out, err := ioutil.ReadFile(path)
+		if err != nil {
+			return err
+		}
 
-	out, err := ioutil.ReadFile(path)
-	if err != nil {
-		return err
-	}
-
-	err = yaml.Unmarshal([]byte(out), &c)
-	if err != nil {
-		return err
+		err = yaml.Unmarshal([]byte(out), &c)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = envconfig.Process("gopkg", c)
@@ -68,6 +66,11 @@ func (c *Config) create() error {
 	u, err := user.Current()
 	if err != nil {
 		return err
+	}
+
+	_, err = file.FindByExtensions(filepath.Join(u.HomeDir, configFile), []string{"yaml", "yml"})
+	if err == nil {
+		return nil
 	}
 
 	buf, err := yaml.Marshal(c)
@@ -91,14 +94,12 @@ func Default() (*Config, error) {
 		SrcDir:    filepath.Join(u.HomeDir, GoPkgDir, "src"),
 	}
 
-	if err := c.load(); err != nil {
-		if err != file.ErrNoFileFound {
-			return nil, err
-		}
+	if err := c.create(); err != nil {
+		return nil, err
+	}
 
-		if err := c.create(); err != nil {
-			return nil, err
-		}
+	if err := c.load(); err != nil {
+		return nil, err
 	}
 
 	return c, nil

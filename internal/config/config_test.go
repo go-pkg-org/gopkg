@@ -6,6 +6,8 @@ import (
 	"os/user"
 	"path/filepath"
 	"testing"
+
+	"github.com/go-pkg-org/gopkg/internal/util/file"
 )
 
 func TestConfig(t *testing.T) {
@@ -17,11 +19,11 @@ func TestConfig(t *testing.T) {
 		t.Error(err)
 	}
 
-	file := filepath.Join(u.HomeDir, ".gopkg.yml")
+	path := filepath.Join(u.HomeDir, ".gopkg.yml")
 	body := []byte(`maintainer:
   email: test@example.com`)
 
-	if err := ioutil.WriteFile(file, body, 0644); err != nil {
+	if err := ioutil.WriteFile(path, body, 0644); err != nil {
 		t.Error(err)
 	}
 
@@ -32,7 +34,9 @@ func TestConfig(t *testing.T) {
 	}
 
 	if err := c.load(); err != nil {
-		t.Error(err)
+		if err != file.ErrNoFileFound {
+			t.Error(err)
+		}
 	}
 
 	if c.BinDir != "BIN_DIR" {
@@ -47,7 +51,7 @@ func TestConfig(t *testing.T) {
 		t.Errorf("Config maintainer email not equal the expected value, got %s", c.Maintainer.Email)
 	}
 
-	if err := os.Remove(file); err != nil {
+	if err := os.Remove(path); err != nil {
 		t.Error(err)
 	}
 
@@ -117,5 +121,9 @@ func TestConfigDefault(t *testing.T) {
 		if test.Actual != test.Expected {
 			t.Errorf("Config %s actual value [%s] is not equal to expected [%s]", test.Text, test.Actual, test.Expected)
 		}
+	}
+
+	if err := os.Remove(filepath.Join(u.HomeDir, ".gopkg.yaml")); err != nil {
+		t.Error(err)
 	}
 }
